@@ -7,21 +7,27 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="assets/favicon.png" type="image/png">
     <style>
         :root {
-            --bg-color: #121212;
-            --text-color: #00ff00;
-            --prompt-color: #00ff00;
-            --command-color: #00ffff;
-            --link-color: #ff00ff;
-            --crt-color: rgba(0, 255, 0, 0.15);
+            --bg-color: #000000;
+            --terminal-bg: #080808;
+            --text-color: #e0ffe0;
+            --prompt-color: #c4ffc4;
+            --command-color: #ffffff;
+            --link-color: #c4ffc4;
+            --warning-color: #ffcc00;
+            --error-color: #ff6060;
+            --boot-color: #88ff88;
+            --glow-color: rgba(224, 255, 224, 0.45);
+            --scanline-color: rgba(224, 255, 224, 0.07);
         }
 
         body, html {
             height: 100%;
             margin: 0;
             padding: 0;
-            background-color: black;
+            background-color: var(--bg-color);
             color: var(--text-color);
             font-family: 'Roboto Mono', monospace;
             overflow: hidden;
@@ -41,20 +47,23 @@
 
         .terminal {
             flex: 1;
-            background-color: rgba(0, 0, 0, 0.85);
-            border-radius: 5px;
-            padding: 20px;
+            background-color: var(--terminal-bg);
+            border-radius: 15px;
+            padding: 25px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
             position: relative;
-            box-shadow: inset 0 0 18px rgba(0, 255, 0, 0.3);
-            border: 1px solid rgba(0, 255, 0, 0.3);
+            box-shadow: inset 0 0 30px rgba(224, 255, 224, 0.15);
+            border: 1px solid rgba(224, 255, 224, 0.3);
+            transform: perspective(800px) rotateX(0.8deg);
+            margin: 10px 20px;
         }
 
         .output {
             margin-bottom: 15px;
             text-shadow: 0 0 5px var(--text-color);
+            line-height: 1.3;
         }
 
         .prompt {
@@ -66,6 +75,22 @@
         .command {
             color: var(--command-color);
             text-shadow: 0 0 5px var(--command-color);
+        }
+
+        .warning {
+            color: var(--warning-color);
+            text-shadow: 0 0 5px var(--warning-color);
+        }
+
+        .error {
+            color: var(--error-color);
+            text-shadow: 0 0 5px var(--error-color);
+        }
+
+        .boot-text {
+            color: var(--boot-color);
+            text-shadow: 0 0 3px var(--boot-color);
+            opacity: 0.9;
         }
 
         .input-line {
@@ -101,9 +126,10 @@
         .ascii-art {
             white-space: pre;
             font-family: 'Roboto Mono', monospace;
-            line-height: 1.2;
+            line-height: 1.0;
             color: var(--command-color);
             text-shadow: 0 0 5px var(--command-color);
+            font-size: 0.7em;
         }
 
         /* CRT effects */
@@ -113,11 +139,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-            background-size: 100% 4px;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 3px;
             z-index: 2;
             pointer-events: none;
-            opacity: 0.25;
+            opacity: 0.3;
         }
 
         .scanline {
@@ -129,11 +155,11 @@
             background: linear-gradient(to bottom,
                 transparent,
                 transparent 50%,
-                var(--crt-color) 50%,
-                var(--crt-color));
-            background-size: 100% 4px;
+                var(--scanline-color) 50%,
+                var(--scanline-color));
+            background-size: 100% 3px;
             animation: scanline 10s linear infinite;
-            opacity: 0.3;
+            opacity: 0.7;
             pointer-events: none;
             z-index: 2;
         }
@@ -144,9 +170,10 @@
             left: 0;
             width: 100%;
             height: 100%;
-            box-shadow: inset 0 0 80px rgba(0, 255, 0, 0.5);
+            box-shadow: inset 0 0 150px var(--glow-color);
             pointer-events: none;
             z-index: 3;
+            border-radius: 15px;
         }
 
         .flicker {
@@ -155,7 +182,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 255, 0, 0.05);
+            background: rgba(224, 255, 224, 0.03);
             opacity: 0;
             pointer-events: none;
             z-index: 4;
@@ -172,11 +199,57 @@
         }
 
         @keyframes flicker {
-            0% { opacity: 0.1; }
-            25% { opacity: 0.15; }
-            50% { opacity: 0.1; }
-            75% { opacity: 0.05; }
-            100% { opacity: 0.1; }
+            0% { opacity: 0.01; }
+            25% { opacity: 0.02; }
+            50% { opacity: 0.03; }
+            75% { opacity: 0.02; }
+            100% { opacity: 0.01; }
+        }
+
+        /* Screen warp effect */
+        .crt-container {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .crt-content {
+            height: 100%;
+            width: 100%;
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(224, 255, 224, 0.2);
+        }
+
+        .crt-bezel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8),
+                        inset 0 0 300px rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            pointer-events: none;
+            z-index: 6;
+        }
+
+        .crt-curvature {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(
+                circle at center,
+                transparent 50%,
+                rgba(0, 0, 0, 0.35) 100%
+            );
+            pointer-events: none;
+            z-index: 5;
+            border-radius: 15px;
         }
 
         a {
@@ -196,40 +269,225 @@
             }
 
             .terminal {
-                padding: 10px;
+                padding: 15px;
+                margin: 5px;
+            }
+
+            .ascii-art {
+                font-size: 0.45em;
             }
         }
 
-        /* Vignette effect */
-        .vignette {
+        /* Power button and LED */
+        .power-button {
             position: absolute;
+            bottom: 20px;
+            right: 30px;
+            width: 20px;
+            height: 20px;
+            background-color: #222;
+            border-radius: 50%;
+            border: 2px solid #444;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .power-led {
+            position: absolute;
+            bottom: 23px;
+            right: 60px;
+            width: 8px;
+            height: 8px;
+            background-color: rgba(100, 255, 100, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(100, 255, 100, 0.8);
+            z-index: 10;
+            animation: led-pulse 3s infinite;
+        }
+
+        @keyframes led-pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+
+        /* Boot sequence overlay */
+        .boot-sequence {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.7);
-            pointer-events: none;
-            z-index: 5;
+            background-color: #000;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            box-sizing: border-box;
+            overflow: auto;
+            font-family: 'Roboto Mono', monospace;
+            color: var(--boot-color);
+            text-shadow: 0 0 3px var(--boot-color);
+            opacity: 0.95;
+        }
+
+        .boot-line {
+            margin-bottom: 0.5rem;
+            animation: boot-appear 0.1s both;
+        }
+
+        @keyframes boot-appear {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .boot-warning {
+            color: var(--warning-color);
+            text-shadow: 0 0 3px var(--warning-color);
+        }
+
+        .boot-error {
+            color: var(--error-color);
+            text-shadow: 0 0 3px var(--error-color);
+        }
+
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
+    <div class="boot-sequence" id="bootSequence">
+        <!-- Boot sequence will be populated by JavaScript -->
+    </div>
+
     <div class="container">
-        <div class="terminal" id="terminal">
-            <div id="outputContainer"></div>
-            <div class="input-line">
-                <span class="prompt">visitor@spoon.rip:~$</span>
-                <input type="text" id="commandInput" autofocus>
+        <div class="crt-container">
+            <div class="crt-content">
+                <div class="terminal" id="terminal">
+                    <div id="outputContainer"></div>
+                    <div class="input-line">
+                        <span class="prompt">visitor@spoon.rip:~$</span>
+                        <input type="text" id="commandInput" autofocus>
+                    </div>
+                </div>
+                <div class="crt-overlay"></div>
+                <div class="scanline"></div>
+                <div class="glow"></div>
+                <div class="flicker"></div>
+                <div class="crt-curvature"></div>
+                <div class="crt-bezel"></div>
             </div>
         </div>
-        <div class="crt-overlay"></div>
-        <div class="scanline"></div>
-        <div class="glow"></div>
-        <div class="flicker"></div>
-        <div class="vignette"></div>
+        <div class="power-button"></div>
+        <div class="power-led"></div>
     </div>
 
     <script>
+        // Boot sequence text
+        const bootSequenceText = [
+            "SPOON-BIOS v4.2.0, An Enhanced BIOS for CULINARY Systems",
+            "Copyright (c) 2025 SPOON Technologies Ltd.",
+            "",
+            "SPOON-4200 BIOS Version 1.0.2",
+            "Soup Processor.......: INTEL I9-12900KS @ 5.2GHz",
+            "Utensil Memory.......: 64GB DDR5-6400",
+            "Silverware Bus.......: PCIe Gen 5.0",
+            "",
+            "Detecting IDE Primary Master...",
+            "LadieSPOON SSD 4TB Found.",
+            "",
+            "Initializing Culinary File System...",
+            "Loading Kernel...... OK",
+            "Loading Shell....... OK",
+            "Loading Foodware.... OK",
+            "",
+            "SPOON SYSTEM CHECK v2.5",
+            "Fork Integrity...... OK",
+            "Knife Calibration... OK",
+            "Spoon Alignment..... PERFECT",
+            "",
+            "Checking Social Network Interface...",
+            "LinkedIn............ CONNECTED",
+            "GitHub.............. CONNECTED",
+            "Resume Database..... CONNECTED",
+            "",
+            "Checking Employer Compatibility...",
+            "Spoonify............ 95% MATCH",
+            "SpoonTech Inc....... 92% MATCH",
+            "Ladle AI Labs....... 97% MATCH",
+            "",
+            "JOB SEARCH MODULE v3.1",
+            "Scanning Employment Repositories...",
+            "Analyzing Recruitment Databases...",
+            "Injecting Resume to Target Servers...",
+            "",
+            "WARNING: This terminal was hastily assembled in an afternoon",
+            "Some features may be UNSTABLE or NON-FUNCTIONAL",
+            "Report issues to: https://github.com/GodSpoon/terminal-portfolio/issues",
+            "Feel free to fork the repository and make your own!",
+            "",
+            "TERMINAL READY - PRESS ANY KEY TO CONTINUE"
+        ];
+
+        // Boot sequence display
+        function displayBootSequence() {
+            const bootSequenceElement = document.getElementById('bootSequence');
+            let i = 0;
+
+            function displayNextLine() {
+                if (i < bootSequenceText.length) {
+                    const line = bootSequenceText[i];
+                    const lineElement = document.createElement('div');
+                    lineElement.className = 'boot-line';
+
+                    // Apply special styling based on line content
+                    if (line.includes('WARNING:')) {
+                        lineElement.className += ' boot-warning';
+                    } else if (line.includes('ERROR:') || line.includes('FAIL')) {
+                        lineElement.className += ' boot-error';
+                    }
+
+                    lineElement.textContent = line;
+                    bootSequenceElement.appendChild(lineElement);
+                    bootSequenceElement.scrollTop = bootSequenceElement.scrollHeight;
+
+                    i++;
+
+                    // Vary typing speed for more realism
+                    const delay = line === "" ? 300 : Math.random() * 100 + 50;
+
+                    setTimeout(displayNextLine, delay);
+                } else {
+                    // Boot sequence finished
+                    bootSequenceElement.innerHTML += '<div class="boot-line blink">_</div>';
+
+                    // Add event listener to dismiss boot sequence
+                    document.addEventListener('keydown', dismissBootSequence, { once: true });
+                    document.addEventListener('click', dismissBootSequence, { once: true });
+                }
+            }
+
+            // Start displaying boot sequence
+            displayNextLine();
+        }
+
+        // Dismiss boot sequence
+        function dismissBootSequence() {
+            const bootSequenceElement = document.getElementById('bootSequence');
+            bootSequenceElement.style.animation = 'fadeOut 0.5s forwards';
+
+            setTimeout(() => {
+                bootSequenceElement.classList.add('hidden');
+                commandInput.focus();
+                // Show logo after boot sequence
+                showLogo();
+                setTimeout(() => {
+                    showWarningMessage();
+                }, 500);
+            }, 500);
+        }
+
         // Command history functionality
         let commandHistory = [];
         let historyIndex = -1;
@@ -238,20 +496,37 @@
         const terminal = document.getElementById('terminal');
         const outputContainer = document.getElementById('outputContainer');
         const commandInput = document.getElementById('commandInput');
+        const powerButton = document.querySelector('.power-button');
 
-        // Initial command
+        // Warning message about site being built quickly
+        function showWarningMessage() {
+            const warningText = `
+<span class="warning">⚠️ WARNING: This terminal portfolio was built in an afternoon and may contain bugs!</span>
+<span>If you encounter any issues, please report them at: <a href="https://github.com/GodSpoon/terminal-portfolio/issues" target="_blank">github.com/GodSpoon/terminal-portfolio/issues</a></span>
+<span>Feel free to fork this project and create your own terminal portfolio.</span>
+
+Type <span class="command">help</span> to see available commands.`;
+
+            addOutput(warningText);
+        }
+
+        // Initial commands
         window.addEventListener('load', () => {
+            // Start boot sequence
+            displayBootSequence();
+
+            // Focus command input
             commandInput.focus();
-            // Print ASCII art logo automatically on load
-            showLogo();
-            setTimeout(() => {
-                addOutput('Type <span class="command">help</span> to see available commands.');
-            }, 300);
         });
 
         // Focus input when terminal is clicked
         terminal.addEventListener('click', () => {
             commandInput.focus();
+        });
+
+        // Power button effect
+        powerButton.addEventListener('click', () => {
+            powerOff();
         });
 
         // Command input handling
@@ -290,7 +565,7 @@
                 // Simple tab completion
                 e.preventDefault();
                 const input = commandInput.value.toLowerCase();
-                const commands = ['help', 'resume', 'skills', 'contact', 'github', 'linkedin', 'projects', 'logo', 'clear', 'meme', 'whoami'];
+                const commands = ['help', 'resume', 'skills', 'contact', 'github', 'linkedin', 'projects', 'logo', 'clear', 'meme', 'whoami', 'boot', 'warning'];
 
                 const matches = commands.filter(cmd => cmd.startsWith(input));
                 if (matches.length === 1) {
@@ -351,6 +626,12 @@
                 case 'whoami':
                     showWhoami();
                     break;
+                case 'boot':
+                    rebootSystem();
+                    break;
+                case 'warning':
+                    showWarningMessage();
+                    break;
                 case '':
                     // Just show a new line for empty command
                     break;
@@ -375,6 +656,14 @@
             outputContainer.appendChild(outputDiv);
         }
 
+        // Command to reboot the system
+        function rebootSystem() {
+            addOutput("<span class='boot-text'>Initiating system reboot...</span>");
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        }
+
         // Command functions
         function showHelp() {
             const helpText = `
@@ -391,6 +680,8 @@
 <span class="command">meme</span>      - Show a random tech meme
 <span class="command">clear</span>     - Clear the terminal
 <span class="command">whoami</span>    - Who you are
+<span class="command">boot</span>      - Reboot the system
+<span class="command">warning</span>   - Show warning message
 
 [Tab] for autocomplete, [↑][↓] for command history`;
 
@@ -401,62 +692,46 @@
             const resumeText = `
 <span class="command">PROFESSIONAL SUMMARY</span>
 
-Detail-oriented IT Systems Administrator with 10+ years of experience in managing complex
-infrastructure, networks, servers, and software supporting large-scale operations. Proficient in Cloud
-Solutions, Networking, Administration, Automation, and Development Operations. Proven track record in
-leading help desk teams and implementing IT solutions for various industries.
+IT Systems Administrator with 10+ years of experience managing infrastructure, networks, servers, and software.
+Proficient in Cloud Solutions, Networking, Administration, Automation, and Development Operations.
+Proven track record leading help desk teams and implementing IT solutions across various industries.
 
 <span class="command">WORK EXPERIENCE</span>
 
-<span class="command">IT Systems Administrator | Pathfinder | Huntington, IN | August 2021 to Present</span>
-• Leading a comprehensive migration of locally hosted infrastructure to cloud infrastructure
-• Managed internal and external help desk teams
-• Developed and deployed several DevOps & Business Operations solutions
-• Managed and maintained a complex network infrastructure consisting of 12+ servers/HA clusters, 14+
-L3 switches, 10+ routers, 6+ firewalls & fiber/SD-WAN interconnects between 6+ sites
-• Conducted regular audits to ensure compliance with industry standards (e.g., HIPAA) and internal policies
-• Assisted in the planning and execution of server migrations/upgrades while minimizing downtime
-• Documented standard operating procedures (SOPs) for common IT tasks
-• Collaborated with cross-functional teams to design and implement disaster recovery plans
+<span class="command">IT Systems Administrator | Pathfinder | Location Redacted | 2021 to Present</span>
+• Leading comprehensive migration from on-premises to cloud infrastructure
+• Managing internal and external help desk teams
+• Developing and deploying DevOps & Business Operations solutions
+• Maintaining complex network infrastructure with servers, switches, routers, firewalls
+• Conducting compliance audits for industry standards
+• Planning and executing server migrations with minimal downtime
+• Documenting standard operating procedures for IT tasks
+• Implementing disaster recovery plans
 
-<span class="command">Aircraft Maintenance Technician | Air National Guard | Wing, ND | August 2017 to June 2023</span>
-• Performed numerous detailed weapons systems maintenance tasks on the A-10 airframe & supporting equipment
-• Commended for achieving certification for weapons systems back-shop technician status at the 122nd AFB in record time
-• Received the Commander's Excellence Award in 2021 and the Excellence Award for Maintenance in 2022
+<span class="command">Aircraft Maintenance Technician | Air National Guard | Location Redacted | 2017 to 2023</span>
+• Performed weapons systems maintenance on military aircraft
+• Achieved certification for weapons systems technician in record time
+• Received multiple excellence awards for performance
 
-<span class="command">Systems Engineer (Contractor) | Lippert Components/Oswyn Global, LLC | Fort Wayne, IN | February 2020 to April 2022</span>
+<span class="command">Systems Engineer (Contractor) | Previous Employer | Location Redacted | 2020 to 2022</span>
 • Designed and implemented IT infrastructure solutions at remote sites
-• Managed and maintained server systems, including installation, configuration, troubleshooting, and upgrades
-• Performed regular system monitoring and maintenance tasks to ensure high availability and reliability
-• Evaluated hardware and software technologies for compatibility with existing systems
-• Provided technical support to end-users by troubleshooting hardware/software issues
+• Managed server systems installation, configuration and maintenance
+• Evaluated hardware/software technologies for system compatibility
+• Provided technical support to end-users
 • Collaborated with vendors on procurement activities
 
-<span class="command">Owner & IT Consultant/Contractor | King IT Services, LLC | Northeast Indiana | January 2017 to April 2022</span>
-• Founded & Operated King IT Services, LLC
-• Developed customized IT solutions based on client requirements
-• Managed multiple projects simultaneously, ensuring timely delivery within budget constraints
-• Conducted thorough analysis of client's existing systems to identify areas for improvement
-• Implemented security measures to protect client data from potential cyber threats
-• Provided technical training sessions for clients' staff members
+<span class="command">Owner & IT Consultant | IT Services Company | Location Redacted | 2017 to 2022</span>
+• Founded and operated IT services business
+• Developed customized solutions based on client requirements
+• Managed multiple projects simultaneously
+• Implemented security measures to protect client data
+• Provided technical training for clients
 
-<span class="command">Help Desk Technician II | Kelley Automotive | Northeast Indiana | September 2016 to May 2021</span>
-• Deployed equipment and provided technical support to 500+ end-users across 12+ business locations
-• Developed/Implemented asset lifecycle strategies for deployed PCs, servers, phones, and IT hardware
-• Managed and prioritized incoming help desk tickets, ensuring prompt resolution of user problems
-• Collaborated with team members to identify recurring technical issues and develop solutions
-
-<span class="command">PC Repair Technician | Niccum Tech | Fort Wayne, IN | March 2014 to September 2014</span>
-• Diagnosed and repaired hardware and software issues on desktops, laptops, and peripherals
-• Performed system upgrades, including RAM installation, hard drive replacement, and CPU upgrades
-• Installed operating systems (Windows, macOS) and configured drivers for optimal performance
-• Provided technical support to end-users via phone, email, or in-person to resolve IT-related problems
-
-<span class="command">EDUCATION</span>
-
-High school diploma
-Indiana Connections Academy - Indianapolis, IN
-March 2012 to March 2016
+<span class="command">Previous Technical Roles | Various Companies | 2014 to 2021</span>
+• Provided technical support across multiple business locations
+• Developed asset lifecycle strategies for IT hardware
+• Diagnosed and repaired hardware/software issues
+• Performed system upgrades and maintenance
 
 Type 'skills' to see my technical skills
 Type 'contact' to view my contact information`;
@@ -478,19 +753,19 @@ Type 'contact' to view my contact information`;
 • VMware
 • Google Cloud
 • Proxmox
-• Server Management (8+ years)
-• Microsoft Windows Server (8+ years)
+• Server Management
+• Microsoft Windows Server
 
 <span class="command">Networking:</span>
-• Cisco (4 years)
-• Meraki (4 years)
+• Cisco
+• Meraki
 • UniFi
 • Firewall
 • Network Administration
 • VoIP
 • DNS
 • Fortinet
-• Networking (8 years)
+• SD-WAN
 
 <span class="command">Development & Automation:</span>
 • Agile
@@ -526,10 +801,10 @@ Type 'contact' to view my contact information`;
             const contactText = `
 <span class="command">CONTACT INFORMATION</span>
 
-<span class="command">Name:</span> Sam King
-<span class="command">Location:</span> Fort Wayne, IN 46808
-<span class="command">Email:</span> sking@kingitservices.com
-<span class="command">Phone:</span> 260-337-3317
+<span class="command">Name:</span> [Redacted for privacy]
+<span class="command">Location:</span> [Redacted for privacy]
+<span class="command">Email:</span> [Redacted for privacy]
+<span class="command">Phone:</span> [Redacted for privacy]
 
 <span class="command">LinkedIn:</span> <a href="https://www.linkedin.com/in/sam-king-937831199" target="_blank">www.linkedin.com/in/sam-king-937831199</a>
 <span class="command">GitHub:</span> <a href="https://github.com/GodSpoon" target="_blank">github.com/GodSpoon</a>
@@ -560,9 +835,9 @@ Type 'linkedin' or 'github' to open these links directly.`;
 • Reduced operational costs while improving system reliability and performance
 
 <span class="command">Network Infrastructure Upgrade</span>
-• Managed complex network infrastructure with 12+ servers/HA clusters
-• Configured and maintained 14+ L3 switches, 10+ routers, 6+ firewalls
-• Implemented SD-WAN solutions connecting 6+ sites
+• Managed complex network infrastructure with multiple servers/HA clusters
+• Configured and maintained switches, routers, firewalls
+• Implemented SD-WAN solutions connecting multiple sites
 • Enhanced network security and improved overall performance
 
 <span class="command">DevOps & Business Operations Solutions</span>
@@ -571,30 +846,13 @@ Type 'linkedin' or 'github' to open these links directly.`;
 • Implemented CI/CD pipelines for application deployment
 • Designed business intelligence dashboards for operational insights
 
-<span class="command">King IT Services Consultancy</span>
+<span class="command">IT Services Consultancy</span>
 • Founded and operated successful IT consultancy
 • Provided customized solutions for diverse client requirements
 • Managed multiple concurrent projects across various industries
 • Delivered technical training and knowledge transfer to clients`;
 
             addOutput(projectsText);
-        }
-
-        function showLogo() {
-            const logoText = `
-<span class="ascii-art">
- _______  _______  _______  _______  _   _________ _______
-(  ____ \\(  ____ )(  ___  )(  ___  )( (    /|\\__   __/(  ____ )
-| (    \\/| (    )|| (   ) || (   ) ||  \\  ( |   ) (   | (    )|
-| (_____ | (____)|| |   | || |   | ||   \\ | |   | |   | (____)|
-(_____  )|  _____)| |   | || |   | || (\\ \\) |   | |   |     __)
-      ) || (      | |   | || |   | || | \\   |   | |   | (\\ (
-/\\____) || )      | (___) || (___) || )  \\  |   | |   | ) \\ \\__
-\\_______)|/       (_______)(_______)|/    )_)   )_(   |/   \\__/
-
-                                       spoon.rip
-</span>`;
-            addOutput(logoText);
         }
 
         function showMeme() {
@@ -650,7 +908,20 @@ Type 'linkedin' or 'github' to open these links directly.`;
                   (_'>-|
                   (_.--'
 </span>
-<span>DNS: It's always DNS.</span>`
+<span>DNS: It's always DNS.</span>`,
+
+                `<span class="ascii-art">
+  _______
+ /       \\
+| ERROR:  |
+| Spoon   |
+| Not     |
+| Found   |
+\\_________/
+  ||    ||
+  ||    ||
+</span>
+<span>When you need a spoon but your drawer only has forks.</span>`
             ];
 
             // Choose a random meme
@@ -658,35 +929,52 @@ Type 'linkedin' or 'github' to open these links directly.`;
             addOutput(randomMeme);
         }
 
-        function clearTerminal() {
-            outputContainer.innerHTML = '';
-        }
+        function showLogo() {
+            const logoText = `
+<span class="ascii-art">
 
-        function showWhoami() {
-            addOutput('You are a visitor exploring the digital realm of Sam King. Welcome to spoon.rip!');
-        }
 
-        // Utility function to escape HTML
-        function escapeHtml(text) {
-            return text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
 
-        // Add CRT screen flicker effect
-        function randomFlicker() {
-            const flicker = document.querySelector('.flicker');
-            const randomOpacity = Math.random() * 0.1;
-            flicker.style.opacity = randomOpacity;
-
-            setTimeout(randomFlicker, Math.random() * 1000 + 500);
-        }
-
-        // Start flicker effect
-        randomFlicker();
-    </script>
-</body>
-</html>
+                                             +%@@@@@@@@%#
+                                        %%@%*=--+*###+=--*%@@%
+                                      #@*:+%@@@@@@@@@@@@@@@*:+@%
+                                   *%%-=%@@@@@@@=.-=-=%@@@@@@@+-#@@
+                                  #@-+@@@%#%@@*..+*+=+-=@@@#%%@@#:%@
+                                %@*=@@@##*%@@#..++=---=++@@@*#%@@@*=@@
+                               #@=*@@%#*=*@@%..-*=::::.==*@@%+*#%@@%:%%
+                              %@=#@@##*+-@@@=+.*+:.....:%:@@@==**%@@@-@%
+                              @=*@@#*++-:@@@-#:#=.......#+#@@=-=*#%@@%:@%
+                             ##=@@##*+--:@@@=#=%+.......*+#@@:-=+*##@@*+@
+                             @+%@%#*+=-::+@@=@#@#:......%=%@#.:-=+*#%@@=@+
+                            #@*@@%*+=**-..#@#:%@@*:....+++@@::-**==*%@@*@@
+                            @@@@-+@@@@*:#:.*@@-#@@%+:=@-#@%.:#==@@@@#:%@@%
+                            @@#=@@@#+@@@=++:*=%%+=@@*=#@+#:-*:@@@#+@@@++@#
+                            @@=@@@@*-@@@@+#+=*..=*-*+*:.-*-#=@@@@*-@@@@+##
+                            @@@@@%@*-@@#@@@%=+:.:%-+*-..:#+@@@%%@#-@@%@@@#
+                            @@@@#*%+-#*+@@%+%=:::#:+*-::=#*#@@#+#+:##+@@@#
+                            @@@%@@@*-@@@@%+===---#:+*=:---=*%@@@@#-@@@@@@#
+                            @@-:+@@=:@@%::#@%++==*:**+==+%@@::#@@=:%@#.:%#
+                            @@--+@@@@@@%::#@@@%%##:*+##%@@@@--#@@@@@@#.-%%
+                            @@--+@@@@@@%::#@@@@@@#:*=@@@@@@@--#@@@@@@#.-%%
+                            @@--=@@@@@@%:-#@@@@@@*.*-@@@@@@@--#@@@@@@#:-%%
+                            @@--=@@@@@@%:-#@@@@@@+:*:@@@@@@@--#@@@@@@#:-%%
+                            @@-==@@@@@@%:-#@@@@@@=:#:@@@@@@@--#@@@@@@#:=%%
+                            @@-=+@@@@@@%:-#@@@@@@-:#:@@@@@@@-=#@@@@@@#:=%%
+                            @@-=+@@@@@@%-=#@@@@@@-:*-%@@@@@@-+#@@@@@@#:=%%
+                            @@-++@@@@@@%-=#@@@@@@-:*=%@@@@@@-+*@@@@@@#-=%%
+                            @@=++@@@@@@%-=#@@@@@%-.*+#@@@@@@-**@@@@@@#-=%%
+                            @@=*+@@@@@@%-+#@@@@@%-.***@@@@@@=##@@@@@@#-+%%
+                            @@=#+@@@@@@%=*#@@@@@%=.+#*@@@@@@=##@@@@@@#=+%%
+                            @@+#*@@@@@@%+##@@@@@#-.+%+@@@@@@+%#@@@@@@#+*@%
+                            @@*%#@@@@@@%*%%@@@@@#-.*@+@@@@@@*@%@@@@@@%#%@%
+                            @@***%@@@@@#***%@@@@#.:#@=@@@@@**+#@@@@@@#**%@
+                   *#%@@%*+ *##%#%%@@#-+****-@@@@+.:-@@@@:=+++*++@@%##*#*%@*#@%@%#++
+                          @@@@@@@@@@@@%@@@@@%%%@@@@@@@@@%#@@@@@%%@@@@@@@@@@@@
+                     #%#%+             +***###%@@@@@@@@%%%#***+           %#  @@@#
+                   %@@@@@@#  ::                                   #@@@+  @@@%#@@@@@%
+                  #%@#      @@@@@@%  #%%%+    #%%#+  #@#   %%    +@@%%@@#*%% *@%  %@@
+                   %@@@%*   @@* *@@*@@@@@@% #@@@@@@@*%@@# *@@    +@@ %#@@#@@@*@@#+%@%
+                     %%@@@% @@@@@@%@@%   %@@@@%   %@%%@@@@*@@    *@@@@@%+#@@@*@@@@@%
+                   %%# +@@% @@%##+ @@%+ #%@%@@%+ *%@%%@@%@@@%    *@@#@@# #@@@*@%
+                   #@@@@@@* @@@    :%@@@@@@ -%@@@@@@ %@@ *@@% %@%+@@ %@@*#@@@*@%
+                     =%#    @%        %@+      %@+   #@    %*  @  ##   @  %%  %+
