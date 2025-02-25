@@ -6,7 +6,7 @@
     <title>spoon.rip</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
     <link rel="icon" href="assets/favicon.png" type="image/png">
     <style>
         :root {
@@ -21,7 +21,11 @@
             --boot-color: #88ff88;
             --glow-color: rgba(224, 255, 224, 0.45);
             --scanline-color: rgba(224, 255, 224, 0.07);
+            --scan-width: 2px;
+            --scan-fps: 60;
         }
+
+        @import url('https://fonts.googleapis.com/css?family=VT323');
 
         body, html {
             height: 100%;
@@ -122,17 +126,89 @@
             }
         }
 
-        /* Ensure all ASCII art is properly displayed */
-        .ascii-art {
-            white-space: pre;
-            font-family: 'Roboto Mono', monospace;
-            line-height: 1.0;
-            color: var(--command-color);
-            text-shadow: 0 0 5px var(--command-color);
-            font-size: 0.7em;
+        /* Animated text logo */
+        .animated-logo {
+            font-family: 'VT323', monospace;
+            font-size: 3em;
+            color: var(--text-color);
+            text-shadow: 0 0 10px var(--text-color), 0 0 20px var(--text-color);
+            margin: 10px 0;
+            position: relative;
+            display: inline-block;
+            letter-spacing: 2px;
+        }
+
+        .animated-logo span {
+            display: inline-block;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+            animation: textGlow 2s infinite alternate;
+        }
+
+        .animated-logo:hover span {
+            animation: textPulse 0.5s infinite alternate;
+        }
+
+        @keyframes textGlow {
+            from { text-shadow: 0 0 10px var(--text-color), 0 0 20px var(--text-color); }
+            to { text-shadow: 0 0 15px var(--text-color), 0 0 30px var(--text-color), 0 0 40px var(--text-color); }
+        }
+
+        @keyframes textPulse {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-5px); }
         }
 
         /* CRT effects */
+        .scanlines {
+            position: relative;
+        }
+
+        .scanlines::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                transparent 50%,
+                rgba(0, 0, 0, 0.3) 51%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .scanlines::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 16, 16, 0.1);
+            opacity: 0;
+            z-index: 2;
+            pointer-events: none;
+            animation: flicker 0.15s infinite;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.55; }
+            10% { opacity: 0.52; }
+            20% { opacity: 0.59; }
+            30% { opacity: 0.51; }
+            40% { opacity: 0.58; }
+            50% { opacity: 0.50; }
+            60% { opacity: 0.53; }
+            70% { opacity: 0.57; }
+            80% { opacity: 0.54; }
+            90% { opacity: 0.59; }
+            100% { opacity: 0.52; }
+        }
+
         .crt-overlay {
             position: absolute;
             top: 0;
@@ -151,17 +227,21 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom,
-                transparent,
-                transparent 50%,
-                var(--scanline-color) 50%,
-                var(--scanline-color));
-            background-size: 100% 3px;
+            height: var(--scan-width);
+            background: var(--scanline-color);
             animation: scanline 10s linear infinite;
             opacity: 0.7;
             pointer-events: none;
             z-index: 2;
+        }
+
+        @keyframes scanline {
+            0% {
+                transform: translateY(0%);
+            }
+            100% {
+                transform: translateY(100%);
+            }
         }
 
         .glow {
@@ -187,23 +267,6 @@
             pointer-events: none;
             z-index: 4;
             animation: flicker 0.3s infinite;
-        }
-
-        @keyframes scanline {
-            0% {
-                transform: translateY(0%);
-            }
-            100% {
-                transform: translateY(100%);
-            }
-        }
-
-        @keyframes flicker {
-            0% { opacity: 0.01; }
-            25% { opacity: 0.02; }
-            50% { opacity: 0.03; }
-            75% { opacity: 0.02; }
-            100% { opacity: 0.01; }
         }
 
         /* Screen warp effect */
@@ -273,12 +336,12 @@
                 margin: 5px;
             }
 
-            .ascii-art {
-                font-size: 0.45em;
+            .animated-logo {
+                font-size: 2em;
             }
         }
 
-        /* Power button and LED */
+        /* Power button */
         .power-button {
             position: absolute;
             bottom: 20px;
@@ -290,6 +353,11 @@
             border: 2px solid #444;
             cursor: pointer;
             z-index: 10;
+        }
+
+        .power-button:hover {
+            background-color: #333;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
         }
 
         .power-led {
@@ -332,8 +400,8 @@
         }
 
         .boot-line {
-            margin-bottom: 0.5rem;
-            animation: boot-appear 0.1s both;
+            margin-bottom: 0.25rem;
+            animation: boot-appear 0.05s both;
         }
 
         @keyframes boot-appear {
@@ -354,6 +422,53 @@
         .hidden {
             display: none;
         }
+
+        /* Switch styling from CSS CRT Effect */
+        .switch-label {
+            position: absolute;
+            bottom: 20px;
+            left: 30px;
+            z-index: 10;
+            cursor: pointer;
+            color: #444;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .switch-label span {
+            padding: 3px 7px;
+            display: block;
+            background: #222;
+            border-radius: 4px;
+            border: 1px solid #444;
+        }
+
+        .switch-label:hover span {
+            background-color: #333;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+            color: #666;
+        }
+
+        #switch {
+            display: none;
+        }
+
+        #switch:checked ~ .crt-container .crt-content {
+            opacity: 1;
+        }
+
+        #switch:not(:checked) ~ .crt-container .crt-content {
+            animation: shutdown 0.5s forwards;
+        }
+
+        @keyframes shutdown {
+            0% { opacity: 1; }
+            60% { opacity: 1; transform: scale(1.0); }
+            65% { opacity: 0.3; transform: scale(0.95, 0.1); }
+            70% { opacity: 0.2; }
+            100% { opacity: 0; transform: scale(0.95, 0.01); }
+        }
     </style>
 </head>
 <body>
@@ -362,8 +477,13 @@
     </div>
 
     <div class="container">
+        <input type="checkbox" id="switch" checked>
+        <label for="switch" class="switch-label">
+            <span>Power</span>
+        </label>
+
         <div class="crt-container">
-            <div class="crt-content">
+            <div class="crt-content scanlines">
                 <div class="terminal" id="terminal">
                     <div id="outputContainer"></div>
                     <div class="input-line">
@@ -384,53 +504,18 @@
     </div>
 
     <script>
-        // Boot sequence text
+        // Boot sequence text - shorter version
         const bootSequenceText = [
-            "SPOON-BIOS v4.2.0, An Enhanced BIOS for CULINARY Systems",
-            "Copyright (c) 2025 SPOON Technologies Ltd.",
-            "",
-            "SPOON-4200 BIOS Version 1.0.2",
+            "SPOON-BIOS v4.2.0, Enhanced BIOS for CULINARY Systems",
             "Soup Processor.......: INTEL I9-12900KS @ 5.2GHz",
             "Utensil Memory.......: 64GB DDR5-6400",
-            "Silverware Bus.......: PCIe Gen 5.0",
-            "",
-            "Detecting IDE Primary Master...",
-            "LadieSPOON SSD 4TB Found.",
-            "",
-            "Initializing Culinary File System...",
-            "Loading Kernel...... OK",
-            "Loading Shell....... OK",
-            "Loading Foodware.... OK",
-            "",
-            "SPOON SYSTEM CHECK v2.5",
-            "Fork Integrity...... OK",
-            "Knife Calibration... OK",
-            "Spoon Alignment..... PERFECT",
-            "",
-            "Checking Social Network Interface...",
-            "LinkedIn............ CONNECTED",
-            "GitHub.............. CONNECTED",
-            "Resume Database..... CONNECTED",
-            "",
-            "Checking Employer Compatibility...",
-            "Spoonify............ 95% MATCH",
-            "SpoonTech Inc....... 92% MATCH",
-            "Ladle AI Labs....... 97% MATCH",
-            "",
-            "JOB SEARCH MODULE v3.1",
-            "Scanning Employment Repositories...",
-            "Analyzing Recruitment Databases...",
-            "Injecting Resume to Target Servers...",
-            "",
-            "WARNING: This terminal was hastily assembled in an afternoon",
-            "Some features may be UNSTABLE or NON-FUNCTIONAL",
-            "Report issues to: https://github.com/GodSpoon/terminal-portfolio/issues",
-            "Feel free to fork the repository and make your own!",
-            "",
-            "TERMINAL READY - PRESS ANY KEY TO CONTINUE"
+            "Initializing CFS.... DONE",
+            "Loading Kernel...... DONE",
+            "Checking Network..... CONNECTED",
+            "JOB SEARCH MODULE.... INITIALIZED"
         ];
 
-        // Boot sequence display
+        // Boot sequence display - faster version
         function displayBootSequence() {
             const bootSequenceElement = document.getElementById('bootSequence');
             let i = 0;
@@ -454,17 +539,16 @@
 
                     i++;
 
-                    // Vary typing speed for more realism
-                    const delay = line === "" ? 300 : Math.random() * 100 + 50;
+                    // Much faster typing speed
+                    const delay = line === "" ? 50 : 30;
 
                     setTimeout(displayNextLine, delay);
                 } else {
                     // Boot sequence finished
                     bootSequenceElement.innerHTML += '<div class="boot-line blink">_</div>';
 
-                    // Add event listener to dismiss boot sequence
-                    document.addEventListener('keydown', dismissBootSequence, { once: true });
-                    document.addEventListener('click', dismissBootSequence, { once: true });
+                    // Dismiss boot sequence automatically after a short delay
+                    setTimeout(dismissBootSequence, 300);
                 }
             }
 
@@ -480,12 +564,12 @@
             setTimeout(() => {
                 bootSequenceElement.classList.add('hidden');
                 commandInput.focus();
-                // Show logo after boot sequence
-                showLogo();
+                // Show animated logo after boot sequence
+                showAnimatedLogo();
                 setTimeout(() => {
-                    showWarningMessage();
-                }, 500);
-            }, 500);
+                    showError();
+                }, 200);
+            }, 300);
         }
 
         // Command history functionality
@@ -497,17 +581,15 @@
         const outputContainer = document.getElementById('outputContainer');
         const commandInput = document.getElementById('commandInput');
         const powerButton = document.querySelector('.power-button');
+        const powerSwitch = document.getElementById('switch');
 
-        // Warning message about site being built quickly
-        function showWarningMessage() {
-            const warningText = `
+        // Show an error at the first prompt
+        function showError() {
+            const errorText = `
 <span class="warning">⚠️ WARNING: This terminal portfolio was built in an afternoon and may contain bugs!</span>
-<span>If you encounter any issues, please report them at: <a href="https://github.com/GodSpoon/terminal-portfolio/issues" target="_blank">github.com/GodSpoon/terminal-portfolio/issues</a></span>
-<span>Feel free to fork this project and create your own terminal portfolio.</span>
+<span>Type <span class="command">help</span> to see available commands.</span>`;
 
-Type <span class="command">help</span> to see available commands.`;
-
-            addOutput(warningText);
+            addOutput(errorText);
         }
 
         // Initial commands
@@ -526,7 +608,12 @@ Type <span class="command">help</span> to see available commands.`;
 
         // Power button effect
         powerButton.addEventListener('click', () => {
-            powerOff();
+            powerSwitch.checked = !powerSwitch.checked;
+            if (!powerSwitch.checked) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
         });
 
         // Command input handling
@@ -586,7 +673,7 @@ Type <span class="command">help</span> to see available commands.`;
             terminal.scrollTop = terminal.scrollHeight;
         }
 
-        // Run command function (can be called from links too)
+        // Run command function
         function runCommand(command) {
             const cmd = command.toLowerCase().trim();
             const args = cmd.split(' ');
@@ -615,7 +702,7 @@ Type <span class="command">help</span> to see available commands.`;
                     showProjects();
                     break;
                 case 'logo':
-                    showLogo();
+                    showAnimatedLogo();
                     break;
                 case 'clear':
                     clearTerminal();
@@ -630,13 +717,13 @@ Type <span class="command">help</span> to see available commands.`;
                     rebootSystem();
                     break;
                 case 'warning':
-                    showWarningMessage();
+                    showError();
                     break;
                 case '':
                     // Just show a new line for empty command
                     break;
                 default:
-                    addOutput(`Command not found: ${command}. Type 'help' to see available commands.`);
+                    addOutput(`<span class="error">Command not found: ${command}</span>. Type 'help' to see available commands.`);
             }
         }
 
@@ -661,7 +748,23 @@ Type <span class="command">help</span> to see available commands.`;
             addOutput("<span class='boot-text'>Initiating system reboot...</span>");
             setTimeout(() => {
                 window.location.reload();
-            }, 1500);
+            }, 1000);
+        }
+
+        // Animated text logo
+        function showAnimatedLogo() {
+            let logoText = 'spoon.rip';
+            let animatedHTML = '<div class="animated-logo">';
+
+            for (let i = 0; i < logoText.length; i++) {
+                const char = logoText[i];
+                const delay = i * 0.1;
+                animatedHTML += `<span style="animation-delay: ${delay}s">${char}</span>`;
+            }
+
+            animatedHTML += '</div>';
+
+            addOutput(animatedHTML);
         }
 
         // Command functions
@@ -676,12 +779,12 @@ Type <span class="command">help</span> to see available commands.`;
 <span class="command">projects</span>  - See my work projects
 <span class="command">github</span>    - Open my GitHub profile
 <span class="command">linkedin</span>  - Open my LinkedIn profile
-<span class="command">logo</span>      - Display the spoon.rip logo
+<span class="command">logo</span>      - Display the animated logo
 <span class="command">meme</span>      - Show a random tech meme
 <span class="command">clear</span>     - Clear the terminal
 <span class="command">whoami</span>    - Who you are
 <span class="command">boot</span>      - Reboot the system
-<span class="command">warning</span>   - Show warning message
+<span class="command">warning</span>   - Show error message
 
 [Tab] for autocomplete, [↑][↓] for command history`;
 
@@ -719,19 +822,6 @@ Proven track record leading help desk teams and implementing IT solutions across
 • Evaluated hardware/software technologies for system compatibility
 • Provided technical support to end-users
 • Collaborated with vendors on procurement activities
-
-<span class="command">Owner & IT Consultant | IT Services Company | Location Redacted | 2017 to 2022</span>
-• Founded and operated IT services business
-• Developed customized solutions based on client requirements
-• Managed multiple projects simultaneously
-• Implemented security measures to protect client data
-• Provided technical training for clients
-
-<span class="command">Previous Technical Roles | Various Companies | 2014 to 2021</span>
-• Provided technical support across multiple business locations
-• Developed asset lifecycle strategies for IT hardware
-• Diagnosed and repaired hardware/software issues
-• Performed system upgrades and maintenance
 
 Type 'skills' to see my technical skills
 Type 'contact' to view my contact information`;
@@ -788,11 +878,7 @@ Type 'contact' to view my contact information`;
 <span class="command">Security & Management:</span>
 • AD/AAD
 • Identity & Access Management
-• System Administration
-
-<span class="command">Emerging Technologies:</span>
-• Machine Learning
-• AI`;
+• System Administration`;
 
             addOutput(skillsText);
         }
@@ -801,10 +887,8 @@ Type 'contact' to view my contact information`;
             const contactText = `
 <span class="command">CONTACT INFORMATION</span>
 
-<span class="command">Name:</span> [Redacted for privacy]
-<span class="command">Location:</span> [Redacted for privacy]
-<span class="command">Email:</span> [Redacted for privacy]
-<span class="command">Phone:</span> [Redacted for privacy]
+<span class="command">Name:</span> Sam
+<span class="command">Email:</span> dev@spoon.rip
 
 <span class="command">LinkedIn:</span> <a href="https://www.linkedin.com/in/sam-king-937831199" target="_blank">www.linkedin.com/in/sam-king-937831199</a>
 <span class="command">GitHub:</span> <a href="https://github.com/GodSpoon" target="_blank">github.com/GodSpoon</a>
@@ -855,76 +939,14 @@ Type 'linkedin' or 'github' to open these links directly.`;
             addOutput(projectsText);
         }
 
-        function showLogo() {
-            const logoText = `
-<span class="ascii-art">
-
-
-
-                                             +%@@@@@@@@%#
-                                        %%@%*=--+*###+=--*%@@%
-                                      #@*:+%@@@@@@@@@@@@@@@*:+@%
-                                   *%%-=%@@@@@@@=.-=-=%@@@@@@@+-#@@
-                                  #@-+@@@%#%@@*..+*+=+-=@@@#%%@@#:%@
-                                %@*=@@@##*%@@#..++=---=++@@@*#%@@@*=@@
-                               #@=*@@%#*=*@@%..-*=::::.==*@@%+*#%@@%:%%
-                              %@=#@@##*+-@@@=+.*+:.....:%:@@@==**%@@@-@%
-                              @=*@@#*++-:@@@-#:#=.......#+#@@=-=*#%@@%:@%
-                             ##=@@##*+--:@@@=#=%+.......*+#@@:-=+*##@@*+@
-                             @+%@%#*+=-::+@@=@#@#:......%=%@#.:-=+*#%@@=@+
-                            #@*@@%*+=**-..#@#:%@@*:....+++@@::-**==*%@@*@@
-                            @@@@-+@@@@*:#:.*@@-#@@%+:=@-#@%.:#==@@@@#:%@@%
-                            @@#=@@@#+@@@=++:*=%%+=@@*=#@+#:-*:@@@#+@@@++@#
-                            @@=@@@@*-@@@@+#+=*..=*-*+*:.-*-#=@@@@*-@@@@+##
-                            @@@@@%@*-@@#@@@%=+:.:%-+*-..:#+@@@%%@#-@@%@@@#
-                            @@@@#*%+-#*+@@%+%=:::#:+*-::=#*#@@#+#+:##+@@@#
-                            @@@%@@@*-@@@@%+===---#:+*=:---=*%@@@@#-@@@@@@#
-                            @@-:+@@=:@@%::#@%++==*:**+==+%@@::#@@=:%@#.:%#
-                            @@--+@@@@@@%::#@@@%%##:*+##%@@@@--#@@@@@@#.-%%
-                            @@--+@@@@@@%::#@@@@@@#:*=@@@@@@@--#@@@@@@#.-%%
-                            @@--=@@@@@@%:-#@@@@@@*.*-@@@@@@@--#@@@@@@#:-%%
-                            @@--=@@@@@@%:-#@@@@@@+:*:@@@@@@@--#@@@@@@#:-%%
-                            @@-==@@@@@@%:-#@@@@@@=:#:@@@@@@@--#@@@@@@#:=%%
-                            @@-=+@@@@@@%:-#@@@@@@-:#:@@@@@@@-=#@@@@@@#:=%%
-                            @@-=+@@@@@@%-=#@@@@@@-:*-%@@@@@@-+#@@@@@@#:=%%
-                            @@-++@@@@@@%-=#@@@@@@-:*=%@@@@@@-+*@@@@@@#-=%%
-                            @@=++@@@@@@%-=#@@@@@%-.*+#@@@@@@-**@@@@@@#-=%%
-                            @@=*+@@@@@@%-+#@@@@@%-.***@@@@@@=##@@@@@@#-+%%
-                            @@=#+@@@@@@%=*#@@@@@%=.+#*@@@@@@=##@@@@@@#=+%%
-                            @@+#*@@@@@@%+##@@@@@#-.+%+@@@@@@+%#@@@@@@#+*@%
-                            @@*%#@@@@@@%*%%@@@@@#-.*@+@@@@@@*@%@@@@@@%#%@%
-                            @@***%@@@@@#***%@@@@#.:#@=@@@@@**+#@@@@@@#**%@
-                   *#%@@%*+ *##%#%%@@#-+****-@@@@+.:-@@@@:=+++*++@@%##*#*%@*#@%@%#++
-                          @@@@@@@@@@@@%@@@@@%%%@@@@@@@@@%#@@@@@%%@@@@@@@@@@@@
-                     #%#%+             +***###%@@@@@@@@%%%#***+           %#  @@@#
-                   %@@@@@@#  ::                                   #@@@+  @@@%#@@@@@%
-                  #%@#      @@@@@@%  #%%%+    #%%#+  #@#   %%    +@@%%@@#*%% *@%  %@@
-                   %@@@%*   @@* *@@*@@@@@@% #@@@@@@@*%@@# *@@    +@@ %#@@#@@@*@@#+%@%
-                     %%@@@% @@@@@@%@@%   %@@@@%   %@%%@@@@*@@    *@@@@@%+#@@@*@@@@@%
-                   %%# +@@% @@%##+ @@%+ #%@%@@%+ *%@%%@@%@@@%    *@@#@@# #@@@*@%
-                   #@@@@@@* @@@    :%@@@@@@ -%@@@@@@ %@@ *@@% %@%+@@ %@@*#@@@*@%
-                     =%#    @%        %@+      %@+   #@    %*  @  ##   @  %%  %+
-
-
-
-
-
-
-
-
-
-</span>`;
-            addOutput(logoText);
-        }
-
         function showMeme() {
             const memes = [
-                `<span class="ascii-art">
+                `<span class="error">
  (╯°□°)╯︵ ┻━┻
 </span>
 <span>When the production server crashes at 4:59 PM on Friday.</span>`,
 
-                `<span class="ascii-art">
+                `<span class="boot-text">
      _.-;;-._
     '-..-'|   |
     '-..-'|_._|
@@ -933,7 +955,7 @@ Type 'linkedin' or 'github' to open these links directly.`;
 </span>
 <span>Coffee: the primary requirement for any successful IT project.</span>`,
 
-                `<span class="ascii-art">
+                `<span class="command">
   ______________________
 /                       \\
 | 99 little bugs in the |
@@ -953,7 +975,7 @@ Type 'linkedin' or 'github' to open these links directly.`;
 </span>
 <span>The life of a programmer in one simple meme.</span>`,
 
-                `<span class="ascii-art">
+                `<span class="warning">
        __
      .^o ~\\.
     Y /'~) }      _____
@@ -970,26 +992,7 @@ Type 'linkedin' or 'github' to open these links directly.`;
                   (_'>-|
                   (_.--'
 </span>
-<span>DNS: It's always DNS.</span>`,
-
-                `<span class="ascii-art">
- ,----------------,              ,---------,
-        ,-----------------------,          ,"        ,"|
-      ,"                      ,"          ,"        ,"  |
-     +-----------------------+  |         |      ,"    |
-     |  .-----------------.  |  |         |   ,"        |
-     |  |                 |  |  |         |,"{         |
-     |  |  sudo make me   |  |  |         |  \`----.....|
-     |  |  a sandwich!    |  |  |         |          }  |
-     |  |                 |  |  |         |         ,'  |
-     |  \`-----------------'  |  |         |      ,"    ,"
-     \`-----------------------'  |    ,---.|   ,"      ,"
-      \`-----,                   |   | }-.|,  ,"      ,"
-        |  \`---------------------|   |   ||  "      ,"
-         \`-----------------------|   |    ''\`'------'
-                                 \`---'
-</span>
-<span>The Linux way: When you need something done right.</span>`
+<span>DNS: It's always DNS.</span>`
             ];
 
             // Choose a random meme
@@ -997,12 +1000,8 @@ Type 'linkedin' or 'github' to open these links directly.`;
             addOutput(randomMeme);
         }
 
-        function clearTerminal() {
-            outputContainer.innerHTML = '';
-        }
-
         function showWhoami() {
-            addOutput('You are a visitor exploring the digital realm of spoon.rip. Welcome!');
+            addOutput('<span class="command">You are a visitor exploring the digital realm of spoon.rip. Welcome!</span>');
         }
 
         // Utility function to escape HTML
@@ -1038,56 +1037,12 @@ Type 'linkedin' or 'github' to open these links directly.`;
         document.body.addEventListener('keydown', (e) => {
             // Alt+P for power off Easter egg
             if (e.altKey && e.key === 'p') {
-                powerOff();
+                powerSwitch.checked = false;
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
             }
         });
-
-        function powerOff() {
-            // Create power off effect
-            const overlay = document.createElement('div');
-            overlay.style.position = 'fixed';
-            overlay.style.top = '0';
-            overlay.style.left = '0';
-            overlay.style.width = '100%';
-            overlay.style.height = '100%';
-            overlay.style.backgroundColor = '#000';
-            overlay.style.zIndex = '1000';
-            overlay.style.opacity = '0';
-            overlay.style.transition = 'opacity 1s ease-in-out';
-            document.body.appendChild(overlay);
-
-            // White line effect
-            const line = document.createElement('div');
-            line.style.position = 'fixed';
-            line.style.top = '50%';
-            line.style.left = '0';
-            line.style.width = '100%';
-            line.style.height = '1px';
-            line.style.backgroundColor = '#fff';
-            line.style.zIndex = '1001';
-            line.style.transform = 'scaleX(0)';
-            line.style.opacity = '0';
-            document.body.appendChild(line);
-
-            // Animate shutdown
-            setTimeout(() => {
-                overlay.style.opacity = '0.9';
-                setTimeout(() => {
-                    line.style.transition = 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out';
-                    line.style.opacity = '1';
-                    line.style.transform = 'scaleX(1)';
-
-                    setTimeout(() => {
-                        line.style.opacity = '0';
-                        line.style.transform = 'scaleX(0.001)';
-
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
-                    }, 300);
-                }, 500);
-            }, 100);
-        }
 
         // Add fade-out animation for boot sequence
         document.head.insertAdjacentHTML('beforeend', `
@@ -1103,8 +1058,14 @@ Type 'linkedin' or 'github' to open these links directly.`;
         randomFlicker();
         addScreenWarp();
 
-        // Power button functionality
-        powerButton.addEventListener('click', powerOff);
+        // Power switch functionality
+        powerSwitch.addEventListener('change', function() {
+            if (!this.checked) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
+        });
     </script>
 </body>
 </html>
