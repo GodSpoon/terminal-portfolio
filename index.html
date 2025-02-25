@@ -9,97 +9,63 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0c0c0c;
-            --text-color: #d0d0d0;
-            --prompt-color: #50fa7b;
-            --command-color: #8be9fd;
-            --link-color: #ff79c6;
-            --error-color: #ff5555;
-            --highlight-color: #f1fa8c;
+            --bg-color: #121212;
+            --text-color: #00ff00;
+            --prompt-color: #00ff00;
+            --command-color: #00ffff;
+            --link-color: #ff00ff;
+            --crt-color: rgba(0, 255, 0, 0.15);
         }
 
         body, html {
             height: 100%;
             margin: 0;
             padding: 0;
-            background-color: var(--bg-color);
+            background-color: black;
             color: var(--text-color);
             font-family: 'Roboto Mono', monospace;
             overflow: hidden;
-            font-size: 15px;
-            line-height: 1.4;
+            position: relative;
         }
 
         .container {
             height: 100%;
-            padding: 0;
+            padding: 20px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
             position: relative;
             overflow: hidden;
+            z-index: 1;
         }
 
         .terminal {
             flex: 1;
-            background-color: var(--bg-color);
+            background-color: rgba(0, 0, 0, 0.85);
+            border-radius: 5px;
             padding: 20px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
             position: relative;
-            box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.6);
-        }
-
-        /* Terminal scanline effect */
-        .terminal::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(
-                rgba(18, 16, 16, 0) 50%,
-                rgba(0, 0, 0, 0.1) 50%
-            );
-            background-size: 100% 4px;
-            pointer-events: none;
-            z-index: 10;
-            opacity: 0.15;
-        }
-
-        /* CRT flicker animation */
-        .terminal::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.03);
-            pointer-events: none;
-            z-index: 11;
-            animation: flicker 0.3s infinite alternate;
-            opacity: 0;
-        }
-
-        @keyframes flicker {
-            0% { opacity: 0; }
-            100% { opacity: 0.03; }
+            box-shadow: inset 0 0 18px rgba(0, 255, 0, 0.3);
+            border: 1px solid rgba(0, 255, 0, 0.3);
         }
 
         .output {
             margin-bottom: 15px;
+            text-shadow: 0 0 5px var(--text-color);
         }
 
         .prompt {
             color: var(--prompt-color);
-            font-weight: bold;
+            display: inline-block;
+            text-shadow: 0 0 5px var(--prompt-color);
         }
 
         .command {
             color: var(--command-color);
+            text-shadow: 0 0 5px var(--command-color);
         }
 
         .input-line {
@@ -113,25 +79,22 @@
             border: none;
             color: var(--command-color);
             font-family: 'Roboto Mono', monospace;
-            font-size: 15px;
+            font-size: 1em;
             outline: none;
             caret-color: var(--text-color);
             padding: 0;
-            margin: 0;
+            margin-left: 8px;
+            text-shadow: 0 0 5px var(--command-color);
         }
 
-        .cursor {
-            display: inline-block;
-            width: 8px;
-            height: 16px;
-            background-color: var(--text-color);
-            animation: blink 1s step-end infinite;
-            margin-left: 2px;
+        .blink {
+            animation: blink-animation 1s steps(2, start) infinite;
         }
 
-        @keyframes blink {
-            0%, 100% { opacity: 0; }
-            50% { opacity: 1; }
+        @keyframes blink-animation {
+            to {
+                visibility: hidden;
+            }
         }
 
         /* Ensure all ASCII art is properly displayed */
@@ -139,64 +102,102 @@
             white-space: pre;
             font-family: 'Roboto Mono', monospace;
             line-height: 1.2;
-            color: var(--highlight-color);
-            font-weight: bold;
+            color: var(--command-color);
+            text-shadow: 0 0 5px var(--command-color);
+        }
+
+        /* CRT effects */
+        .crt-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.25;
+        }
+
+        .scanline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom,
+                transparent,
+                transparent 50%,
+                var(--crt-color) 50%,
+                var(--crt-color));
+            background-size: 100% 4px;
+            animation: scanline 10s linear infinite;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 80px rgba(0, 255, 0, 0.5);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .flicker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 255, 0, 0.05);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 4;
+            animation: flicker 0.3s infinite;
+        }
+
+        @keyframes scanline {
+            0% {
+                transform: translateY(0%);
+            }
+            100% {
+                transform: translateY(100%);
+            }
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.1; }
+            25% { opacity: 0.15; }
+            50% { opacity: 0.1; }
+            75% { opacity: 0.05; }
+            100% { opacity: 0.1; }
         }
 
         a {
             color: var(--link-color);
             text-decoration: none;
-            border-bottom: 1px dotted var(--link-color);
-            transition: all 0.2s ease;
+            text-shadow: 0 0 5px var(--link-color);
         }
 
         a:hover {
-            color: var(--highlight-color);
-            border-bottom: 1px solid var(--highlight-color);
+            text-decoration: underline;
         }
 
-        .error {
-            color: var(--error-color);
-        }
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
 
-        .highlight {
-            color: var(--highlight-color);
-        }
-
-        /* Terminal startup overlay */
-        .boot-sequence {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--bg-color);
-            color: var(--prompt-color);
-            font-family: 'Roboto Mono', monospace;
-            padding: 20px;
-            z-index: 100;
-            overflow: hidden;
-            transition: opacity 0.5s ease;
-            opacity: 1;
-            pointer-events: none;
-        }
-
-        .boot-sequence.hidden {
-            opacity: 0;
-        }
-
-        /* CRT border effect */
-        .crt-border {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border: 10px solid rgba(0, 0, 0, 0.8);
-            border-radius: 20px;
-            pointer-events: none;
-            z-index: 12;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8) inset;
+            .terminal {
+                padding: 10px;
+            }
         }
 
         /* Vignette effect */
@@ -204,110 +205,31 @@
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(
-                circle at center,
-                transparent 50%,
-                rgba(0, 0, 0, 0.4) 100%
-            );
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.7);
             pointer-events: none;
-            z-index: 11;
-        }
-
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
-            body, html {
-                font-size: 14px;
-            }
-
-            .terminal {
-                padding: 15px;
-            }
-
-            .crt-border {
-                border-width: 5px;
-                border-radius: 10px;
-            }
+            z-index: 5;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="terminal" id="terminal">
-            <div class="output" id="welcomeMessage">
-                <span class="ascii-art">
- ██████  ██▓███   ▒█████   ▒█████   ███▄    █     ██▀███   ██▓ ██▓███
-▒██    ▒ ▓██░  ██▒▒██▒  ██▒▒██▒  ██▒ ██ ▀█   █    ▓██ ▒ ██▒▓██▒▓██░  ██▒
-░ ▓██▄   ▓██░ ██▓▒▒██░  ██▒▒██░  ██▒▓██  ▀█ ██▒   ▓██ ░▄█ ▒▒██▒▓██░ ██▓▒
-  ▒   ██▒▒██▄█▓▒ ▒▒██   ██░▒██   ██░▓██▒  ▐▌██▒   ▒██▀▀█▄  ░██░▒██▄█▓▒ ▒
-▒██████▒▒▒██▒ ░  ░░ ████▓▒░░ ████▓▒░▒██░   ▓██░   ░██▓ ▒██▒░██░▒██▒ ░  ░
-▒ ▒▓▒ ▒ ░▒▓▒░ ░  ░░ ▒░▒░▒░ ░ ▒░▒░▒░ ░ ▒░   ▒ ▒    ░ ▒▓ ░▒▓░░▓  ▒▓▒░ ░  ░
-░ ░▒  ░ ░░▒ ░       ░ ▒ ▒░   ░ ▒ ▒░ ░ ░░   ░ ▒░     ░▒ ░ ▒░ ▒ ░░▒ ░
-░  ░  ░  ░░       ░ ░ ░ ▒  ░ ░ ░ ▒     ░   ░ ░      ░░   ░  ▒ ░░░
-      ░               ░ ░      ░ ░           ░       ░      ░
-                </span>
-                <p>Welcome to <span class="highlight">spoon.rip</span> terminal. Type 'help' to see available commands.</p>
-            </div>
             <div id="outputContainer"></div>
             <div class="input-line">
-                <span class="prompt">guest@spoon.rip:~$</span>&nbsp;
+                <span class="prompt">visitor@spoon.rip:~$</span>
                 <input type="text" id="commandInput" autofocus>
             </div>
         </div>
-        <div class="crt-border"></div>
+        <div class="crt-overlay"></div>
+        <div class="scanline"></div>
+        <div class="glow"></div>
+        <div class="flicker"></div>
         <div class="vignette"></div>
-
-        <!-- Boot sequence overlay -->
-        <div class="boot-sequence" id="bootSequence">
-            <div id="bootMessages"></div>
-        </div>
     </div>
 
     <script>
-        // Boot sequence
-        const bootMessages = [
-            "Starting system...",
-            "Initializing kernel...",
-            "Loading system components...",
-            "Mounting file systems...",
-            "Starting network services...",
-            "Loading terminal interface...",
-            "Establishing secure connection...",
-            "Accessing spoon.rip...",
-            "Terminal ready."
-        ];
-
-        const bootSequenceElement = document.getElementById('bootSequence');
-        const bootMessagesElement = document.getElementById('bootMessages');
-
-        function simulateBootSequence() {
-            let i = 0;
-            const interval = setInterval(() => {
-                if (i < bootMessages.length) {
-                    const line = document.createElement('div');
-                    line.textContent = `[${new Date().toISOString().split('T')[1].split('.')[0]}] ${bootMessages[i]}`;
-                    bootMessagesElement.appendChild(line);
-                    i++;
-                    bootMessagesElement.scrollTop = bootMessagesElement.scrollHeight;
-                } else {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        bootSequenceElement.classList.add('hidden');
-
-                        // After boot sequence
-                        setTimeout(() => {
-                            bootSequenceElement.style.display = 'none';
-                            focusCommandInput();
-                        }, 500);
-                    }, 800);
-                }
-            }, 300);
-        }
-
-        // Start boot sequence on page load
-        window.addEventListener('load', simulateBootSequence);
-
         // Command history functionality
         let commandHistory = [];
         let historyIndex = -1;
@@ -317,12 +239,20 @@
         const outputContainer = document.getElementById('outputContainer');
         const commandInput = document.getElementById('commandInput');
 
-        // Focus input on page load and when terminal is clicked
-        function focusCommandInput() {
+        // Initial command
+        window.addEventListener('load', () => {
             commandInput.focus();
-        }
+            // Print ASCII art logo automatically on load
+            showLogo();
+            setTimeout(() => {
+                addOutput('Type <span class="command">help</span> to see available commands.');
+            }, 300);
+        });
 
-        terminal.addEventListener('click', focusCommandInput);
+        // Focus input when terminal is clicked
+        terminal.addEventListener('click', () => {
+            commandInput.focus();
+        });
 
         // Command input handling
         commandInput.addEventListener('keydown', (e) => {
@@ -360,7 +290,7 @@
                 // Simple tab completion
                 e.preventDefault();
                 const input = commandInput.value.toLowerCase();
-                const commands = ['help', 'resume', 'skills', 'about', 'contact', 'clear', 'github', 'linkedin', 'whoami'];
+                const commands = ['help', 'resume', 'skills', 'contact', 'github', 'linkedin', 'projects', 'logo', 'clear', 'meme', 'whoami'];
 
                 const matches = commands.filter(cmd => cmd.startsWith(input));
                 if (matches.length === 1) {
@@ -381,7 +311,7 @@
             terminal.scrollTop = terminal.scrollHeight;
         }
 
-        // Run command function
+        // Run command function (can be called from links too)
         function runCommand(command) {
             const cmd = command.toLowerCase().trim();
             const args = cmd.split(' ');
@@ -397,20 +327,26 @@
                 case 'skills':
                     showSkills();
                     break;
-                case 'about':
-                    showAbout();
-                    break;
                 case 'contact':
                     showContact();
+                    break;
+                case 'github':
+                    openGithub();
+                    break;
+                case 'linkedin':
+                    openLinkedin();
+                    break;
+                case 'projects':
+                    showProjects();
+                    break;
+                case 'logo':
+                    showLogo();
                     break;
                 case 'clear':
                     clearTerminal();
                     break;
-                case 'github':
-                    openGitHub();
-                    break;
-                case 'linkedin':
-                    openLinkedIn();
+                case 'meme':
+                    showMeme();
                     break;
                 case 'whoami':
                     showWhoami();
@@ -419,7 +355,7 @@
                     // Just show a new line for empty command
                     break;
                 default:
-                    addOutput(`<span class="error">Command not found: ${command}</span>\nType 'help' to see available commands.`);
+                    addOutput(`Command not found: ${command}. Type 'help' to see available commands.`);
             }
         }
 
@@ -427,7 +363,7 @@
         function addCommandToOutput(command) {
             const outputDiv = document.createElement('div');
             outputDiv.className = 'output';
-            outputDiv.innerHTML = `<span class="prompt">guest@spoon.rip:~$</span> <span class="command">${escapeHtml(command)}</span>`;
+            outputDiv.innerHTML = `<span class="prompt">visitor@spoon.rip:~$</span> <span class="command">${escapeHtml(command)}</span>`;
             outputContainer.appendChild(outputDiv);
         }
 
@@ -442,15 +378,17 @@
         // Command functions
         function showHelp() {
             const helpText = `
-<span class="highlight">Available Commands:</span>
+<span class="command">Available Commands:</span>
 
 <span class="command">help</span>      - Show this help message
-<span class="command">resume</span>    - Display my resume
-<span class="command">skills</span>    - List my technical skills
-<span class="command">about</span>     - About me
-<span class="command">contact</span>   - My contact information
+<span class="command">resume</span>    - Display my professional experience
+<span class="command">skills</span>    - Show my technical skills
+<span class="command">contact</span>   - View my contact information
+<span class="command">projects</span>  - See my work projects
 <span class="command">github</span>    - Open my GitHub profile
 <span class="command">linkedin</span>  - Open my LinkedIn profile
+<span class="command">logo</span>      - Display the spoon.rip logo
+<span class="command">meme</span>      - Show a random tech meme
 <span class="command">clear</span>     - Clear the terminal
 <span class="command">whoami</span>    - Who you are
 
@@ -461,99 +399,271 @@
 
         function showResume() {
             const resumeText = `
-<span class="highlight">RESUME</span>
+<span class="command">PROFESSIONAL SUMMARY</span>
 
-<span class="highlight">PROFESSIONAL EXPERIENCE</span>
+Detail-oriented IT Systems Administrator with 10+ years of experience in managing complex
+infrastructure, networks, servers, and software supporting large-scale operations. Proficient in Cloud
+Solutions, Networking, Administration, Automation, and Development Operations. Proven track record in
+leading help desk teams and implementing IT solutions for various industries.
 
-<span class="highlight">Software Developer | Example Tech, Inc. | Current</span>
-- Developed and maintained web applications using React, Node.js
-- Implemented CI/CD pipelines using GitHub Actions
-- Collaborated with cross-functional teams to deliver high-quality software
+<span class="command">WORK EXPERIENCE</span>
 
-<span class="highlight">Web Development Intern | Tech Startup | Previous</span>
-- Built responsive web interfaces using HTML, CSS, and JavaScript
-- Participated in code reviews and agile development processes
-- Assisted in database design and optimization
+<span class="command">IT Systems Administrator | Pathfinder | Huntington, IN | August 2021 to Present</span>
+• Leading a comprehensive migration of locally hosted infrastructure to cloud infrastructure
+• Managed internal and external help desk teams
+• Developed and deployed several DevOps & Business Operations solutions
+• Managed and maintained a complex network infrastructure consisting of 12+ servers/HA clusters, 14+
+L3 switches, 10+ routers, 6+ firewalls & fiber/SD-WAN interconnects between 6+ sites
+• Conducted regular audits to ensure compliance with industry standards (e.g., HIPAA) and internal policies
+• Assisted in the planning and execution of server migrations/upgrades while minimizing downtime
+• Documented standard operating procedures (SOPs) for common IT tasks
+• Collaborated with cross-functional teams to design and implement disaster recovery plans
 
-<span class="highlight">EDUCATION</span>
-- B.S. Computer Science, University Example
+<span class="command">Aircraft Maintenance Technician | Air National Guard | Wing, ND | August 2017 to June 2023</span>
+• Performed numerous detailed weapons systems maintenance tasks on the A-10 airframe & supporting equipment
+• Commended for achieving certification for weapons systems back-shop technician status at the 122nd AFB in record time
+• Received the Commander's Excellence Award in 2021 and the Excellence Award for Maintenance in 2022
 
-For more details, type 'skills' or 'contact'`;
+<span class="command">Systems Engineer (Contractor) | Lippert Components/Oswyn Global, LLC | Fort Wayne, IN | February 2020 to April 2022</span>
+• Designed and implemented IT infrastructure solutions at remote sites
+• Managed and maintained server systems, including installation, configuration, troubleshooting, and upgrades
+• Performed regular system monitoring and maintenance tasks to ensure high availability and reliability
+• Evaluated hardware and software technologies for compatibility with existing systems
+• Provided technical support to end-users by troubleshooting hardware/software issues
+• Collaborated with vendors on procurement activities
+
+<span class="command">Owner & IT Consultant/Contractor | King IT Services, LLC | Northeast Indiana | January 2017 to April 2022</span>
+• Founded & Operated King IT Services, LLC
+• Developed customized IT solutions based on client requirements
+• Managed multiple projects simultaneously, ensuring timely delivery within budget constraints
+• Conducted thorough analysis of client's existing systems to identify areas for improvement
+• Implemented security measures to protect client data from potential cyber threats
+• Provided technical training sessions for clients' staff members
+
+<span class="command">Help Desk Technician II | Kelley Automotive | Northeast Indiana | September 2016 to May 2021</span>
+• Deployed equipment and provided technical support to 500+ end-users across 12+ business locations
+• Developed/Implemented asset lifecycle strategies for deployed PCs, servers, phones, and IT hardware
+• Managed and prioritized incoming help desk tickets, ensuring prompt resolution of user problems
+• Collaborated with team members to identify recurring technical issues and develop solutions
+
+<span class="command">PC Repair Technician | Niccum Tech | Fort Wayne, IN | March 2014 to September 2014</span>
+• Diagnosed and repaired hardware and software issues on desktops, laptops, and peripherals
+• Performed system upgrades, including RAM installation, hard drive replacement, and CPU upgrades
+• Installed operating systems (Windows, macOS) and configured drivers for optimal performance
+• Provided technical support to end-users via phone, email, or in-person to resolve IT-related problems
+
+<span class="command">EDUCATION</span>
+
+High school diploma
+Indiana Connections Academy - Indianapolis, IN
+March 2012 to March 2016
+
+Type 'skills' to see my technical skills
+Type 'contact' to view my contact information`;
 
             addOutput(resumeText);
         }
 
         function showSkills() {
             const skillsText = `
-<span class="highlight">TECHNICAL SKILLS</span>
+<span class="command">TECHNICAL SKILLS</span>
 
-<span class="highlight">Languages:</span>
-- JavaScript/TypeScript
-- Python
-- Bash/Shell scripting
-- HTML/CSS
+<span class="command">Infrastructure & Platforms:</span>
+• Linux
+• Virtualization
+• Azure
+• Cloud Computing
+• GCP
+• AWS
+• VMware
+• Google Cloud
+• Proxmox
+• Server Management (8+ years)
+• Microsoft Windows Server (8+ years)
 
-<span class="highlight">Frameworks & Tools:</span>
-- React
-- Node.js
-- Git/GitHub
-- Docker
-- AWS
+<span class="command">Networking:</span>
+• Cisco (4 years)
+• Meraki (4 years)
+• UniFi
+• Firewall
+• Network Administration
+• VoIP
+• DNS
+• Fortinet
+• Networking (8 years)
 
-<span class="highlight">Specialties:</span>
-- Web Development
-- Backend Systems
-- DevOps
-- Linux Administration`;
+<span class="command">Development & Automation:</span>
+• Agile
+• REST APIs
+• Bash
+• DevOps Ansible
+• PowerApps
+• Terraform
+• PowerShell
+• SQL
+• Git
+• MySQL
+• Microsoft SQL Server
+• Power Automate
+• DevOps
+• CI/CD
+• Automation
+• Docker
+
+<span class="command">Security & Management:</span>
+• AD/AAD
+• Identity & Access Management
+• System Administration
+
+<span class="command">Emerging Technologies:</span>
+• Machine Learning
+• AI`;
 
             addOutput(skillsText);
+        }
+
+        function showContact() {
+            const contactText = `
+<span class="command">CONTACT INFORMATION</span>
+
+<span class="command">Name:</span> Sam King
+<span class="command">Location:</span> Fort Wayne, IN 46808
+<span class="command">Email:</span> sking@kingitservices.com
+<span class="command">Phone:</span> 260-337-3317
+
+<span class="command">LinkedIn:</span> <a href="https://www.linkedin.com/in/sam-king-937831199" target="_blank">www.linkedin.com/in/sam-king-937831199</a>
+<span class="command">GitHub:</span> <a href="https://github.com/GodSpoon" target="_blank">github.com/GodSpoon</a>
+
+Type 'linkedin' or 'github' to open these links directly.`;
+
+            addOutput(contactText);
+        }
+
+        function openGithub() {
+            addOutput('Opening GitHub profile...');
+            window.open('https://github.com/GodSpoon', '_blank');
+        }
+
+        function openLinkedin() {
+            addOutput('Opening LinkedIn profile...');
+            window.open('https://www.linkedin.com/in/sam-king-937831199', '_blank');
+        }
+
+        function showProjects() {
+            const projectsText = `
+<span class="command">KEY PROJECTS</span>
+
+<span class="command">Cloud Infrastructure Migration</span>
+• Led comprehensive migration from on-premises to cloud infrastructure
+• Implemented hybrid cloud solutions for critical business applications
+• Designed and deployed robust disaster recovery systems
+• Reduced operational costs while improving system reliability and performance
+
+<span class="command">Network Infrastructure Upgrade</span>
+• Managed complex network infrastructure with 12+ servers/HA clusters
+• Configured and maintained 14+ L3 switches, 10+ routers, 6+ firewalls
+• Implemented SD-WAN solutions connecting 6+ sites
+• Enhanced network security and improved overall performance
+
+<span class="command">DevOps & Business Operations Solutions</span>
+• Developed and deployed multiple automation solutions
+• Created custom tools to streamline IT workflows
+• Implemented CI/CD pipelines for application deployment
+• Designed business intelligence dashboards for operational insights
+
+<span class="command">King IT Services Consultancy</span>
+• Founded and operated successful IT consultancy
+• Provided customized solutions for diverse client requirements
+• Managed multiple concurrent projects across various industries
+• Delivered technical training and knowledge transfer to clients`;
+
+            addOutput(projectsText);
+        }
+
+        function showLogo() {
+            const logoText = `
+<span class="ascii-art">
+ _______  _______  _______  _______  _   _________ _______
+(  ____ \\(  ____ )(  ___  )(  ___  )( (    /|\\__   __/(  ____ )
+| (    \\/| (    )|| (   ) || (   ) ||  \\  ( |   ) (   | (    )|
+| (_____ | (____)|| |   | || |   | ||   \\ | |   | |   | (____)|
+(_____  )|  _____)| |   | || |   | || (\\ \\) |   | |   |     __)
+      ) || (      | |   | || |   | || | \\   |   | |   | (\\ (
+/\\____) || )      | (___) || (___) || )  \\  |   | |   | ) \\ \\__
+\\_______)|/       (_______)(_______)|/    )_)   )_(   |/   \\__/
+
+                                       spoon.rip
+</span>`;
+            addOutput(logoText);
+        }
+
+        function showMeme() {
+            const memes = [
+                `<span class="ascii-art">
+ (╯°□°)╯︵ ┻━┻
+</span>
+<span>When the production server crashes at 4:59 PM on Friday.</span>`,
+
+                `<span class="ascii-art">
+     _.-;;-._
+    '-..-'|   |
+    '-..-'|_._|
+    '-..-'|   |
+    '-..-'|_._|
+</span>
+<span>Coffee: the primary requirement for any successful IT project.</span>`,
+
+                `<span class="ascii-art">
+  ______________________
+/                       \\
+| 99 little bugs in the |
+| code,                 |
+| 99 bugs in the code.  |
+| Take one down, patch  |
+| it around,            |
+|                       |
+| 127 bugs in the code. |
+\\                       /
+ -----------------------
+        \\   ^__^
+         \\  (oo)\\_______
+            (__)\\       )\\/\\
+                ||----w |
+                ||     ||
+</span>
+<span>The life of a programmer in one simple meme.</span>`,
+
+                `<span class="ascii-art">
+       __
+     .^o ~\\.
+    Y /'~) }      _____
+    l/  / /    ,-~     ~~--.,_
+       ( (    /  ~-._         ^.
+        \\ "--'--.    "-._       \\
+         "-.___     \\     "-.    |
+               \\     "-.    "-  /
+                \\       \\.  ,-"
+                 \`.      ).^
+                   'J.....C
+                    (.-.'"
+                   . _  |
+                  (_'>-|
+                  (_.--'
+</span>
+<span>DNS: It's always DNS.</span>`
+            ];
+
+            // Choose a random meme
+            const randomMeme = memes[Math.floor(Math.random() * memes.length)];
+            addOutput(randomMeme);
         }
 
         function clearTerminal() {
             outputContainer.innerHTML = '';
         }
 
-        function showAbout() {
-            const aboutText = `
-<span class="highlight">ABOUT ME</span>
-
-I'm a developer focused on creating elegant solutions to complex problems.
-
-I specialize in full-stack web development with expertise in JavaScript and
-modern frameworks. My interests include system design, cybersecurity, and
-exploring new technologies.
-
-When I'm not coding, you'll find me [redacted].
-
-Type 'github' or 'linkedin' to connect with me online.`;
-
-            addOutput(aboutText);
-        }
-
-        function showContact() {
-            const contactText = `
-<span class="highlight">CONTACT INFORMATION</span>
-
-<span class="highlight">GitHub:</span> <a href="https://github.com/GodSpoon" target="_blank">github.com/GodSpoon</a>
-<span class="highlight">LinkedIn:</span> <a href="https://www.linkedin.com/in/sam-king-937831199" target="_blank">linkedin.com/in/sam-king-937831199</a>
-
-Commands: 'github' and 'linkedin' will open these links in a new tab.`;
-
-            addOutput(contactText);
-        }
-
-        function openGitHub() {
-            window.open('https://github.com/GodSpoon', '_blank');
-            addOutput('Opening GitHub profile in a new tab...');
-        }
-
-        function openLinkedIn() {
-            window.open('https://www.linkedin.com/in/sam-king-937831199', '_blank');
-            addOutput('Opening LinkedIn profile in a new tab...');
-        }
-
         function showWhoami() {
-            addOutput('You are a guest exploring the spoon.rip terminal. Welcome!');
+            addOutput('You are a visitor exploring the digital realm of Sam King. Welcome to spoon.rip!');
         }
 
         // Utility function to escape HTML
@@ -566,10 +676,17 @@ Commands: 'github' and 'linkedin' will open these links in a new tab.`;
                 .replace(/'/g, '&#039;');
         }
 
-        // Initialize with welcome message
-        window.addEventListener('load', () => {
-            // Commands will be available after boot sequence completes
-        });
+        // Add CRT screen flicker effect
+        function randomFlicker() {
+            const flicker = document.querySelector('.flicker');
+            const randomOpacity = Math.random() * 0.1;
+            flicker.style.opacity = randomOpacity;
+
+            setTimeout(randomFlicker, Math.random() * 1000 + 500);
+        }
+
+        // Start flicker effect
+        randomFlicker();
     </script>
 </body>
 </html>
