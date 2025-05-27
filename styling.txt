@@ -1,0 +1,71 @@
+Follow these instructions using the Catppuccin Mocha color palette, JetBrains Mono Nerd Font, and Font Awesome icons:
+
+Overall Aesthetic & Layout
+Dark Base Background:
+
+Set the body or a primary container to a deep, dark color: #11111b (Crust) or #181825 (Mantle). This will emulate the desktop wallpaper.
+Consider a subtle, dark background image that complements the "cosmic" or abstract feel, but keep it low-contrast to avoid distraction.
+Modular, Layered Structure:
+
+Use div elements to create distinct "windows" or "panels" for your portfolio content.
+Apply background-color: #313244 (Surface0), #45475a (Surface1), or #585b70 (Surface2) to these panels to give them a slightly lighter but still dark appearance, akin to the terminal windows floating over the desktop.
+Use border-radius to give panels slightly rounded corners for a softer, modern look.
+Implement subtle box-shadow with a dark color or no shadow to maintain the flat, minimalist feel.
+Asymmetrical Balance:
+
+Design your main portfolio content (e.g., project list, "about me" section) to dominate the central area, similar to the Neovim window.
+Introduce a smaller, fixed "system info" or "status" panel in a corner (e.g., top-left, bottom-right) for personal branding, quick links, or current status.
+Typography & Icons
+Primary Font: JetBrains Mono Nerd Font:
+
+Import and set font-family: 'JetBrains Mono Nerd Font', monospace; for all text within your terminal-like sections and potentially for your entire site. This is crucial for the authentic terminal feel and for rendering custom icons.
+Ensure proper fallback fonts (monospace) are included.
+Font Awesome Icons:
+
+Integrate the Font Awesome library into your project.
+Use Font Awesome icons (<i> tags with classes) to:
+Prefix menu items (e.g., <i class="fas fa-file"></i> New Project).
+Indicate links (e.g., <i class="fab fa-github"></i> GitHub).
+Represent skills or technologies (e.g., <i class="fab fa-react"></i> React).
+Provide visual cues in status bars (e.g., <i class="fas fa-plug"></i> 42 skills loaded).
+Color icons using the accent colors from the Catppuccin Mocha palette.
+Color Palette Application (Catppuccin Mocha)
+Backgrounds:
+
+Page Background (body): #11111b (Crust) or #181825 (Mantle).
+Panel Backgrounds (div for windows/cards): #313244 (Surface0), #45475a (Surface1), or #585b70 (Surface2).
+Text Colors:
+
+Primary Text: #cdd6f4 (Text) for general content within panels.
+Secondary Text/Subheadings: #bac2de (Subtext1) or #a6adc8 (Subtext0) for descriptions, smaller details, or less prominent information.
+Accent Colors (Interactive & Highlighted Elements):
+
+Links/Buttons: #89b4fa (Blue), #cba6f7 (Mauve), or #a6e3a1 (Green).
+Hover/Active States: A slightly brighter or different accent color on hover, e.g., if a link is Blue, make its hover Lavender (#b4befe).
+Code Snippets/Highlights: #fab387 (Peach) or #f9e2af (Yellow) for inline code or specific syntax highlighting.
+Success Messages: #a6e3a1 (Green).
+Error/Warning Messages: #f38ba8 (Red) or #fab387 (Peach).
+Neovim-like Logo/Header: A prominent accent like #cba6f7 (Mauve) or #89b4fa (Blue) for your portfolio's main title or a simulated application logo.
+Borders & Dividers:
+
+Use subtle border colors, often Overlay0 (#6c7086) or Overlay1 (#7f849c), or even just a 1px shift in background color to delineate sections within panels.
+Interactive Elements & Details
+Buttons & Input Fields:
+
+Style with Surface0 or Surface1 backgrounds and Text or Subtext1 color for input.
+Use accent colors for button text or borders on hover/focus.
+Keep borders minimal, relying on box-shadow or background changes for focus states.
+Scrollbars:
+
+Customize scrollbars (if desired and supported by browser) to match the dark theme, using Overlay0 or Overlay1 for the thumb and Mantle or Crust for the track.
+Terminal Prompt Simulation:
+
+Create a dedicated div for a simulated terminal prompt.
+Use JetBrains Mono Nerd Font.
+Prefix lines with a custom prompt string (e.g., user@portfolio:~ $) in Text color, with the ~ $ perhaps in an accent color like Green.
+Animate a typing cursor or simply display static command lines.
+Status Bars:
+
+Implement small "status bars" at the bottom of panels to display concise information (e.g., "Last updated: 2024-01-01", "3 projects loaded").
+Use Subtext0 or Overlay0 for text and Mantle or Crust for background.
+By systematically applying these guidelines, you can create a portfolio site that captures the sophisticated, highly personalized, and functional aesthetic of the described terminal UI.
