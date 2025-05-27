@@ -1,3 +1,23 @@
+#11111b page background,
+#181825 mantle background,
+#313244 panel background (surface0),
+#45475a panel background (surface1),
+#585b70 panel background (surface2),
+#cdd6f4 primary text,
+#bac2de secondary text (subtext1),
+#a6adc8 secondary text (subtext0),
+#89b4fa link/button accent (blue),
+#cba6f7 link/button accent (mauve),
+#a6e3a1 link/button accent (green),
+#b4befe link/button hover (blue hover),
+#fab387 code highlight (peach),
+#f9e2af code highlight (yellow),
+#a6e3a1 success message,
+#f38ba8 error message,
+#fab387 warning message,
+#cba6f7 logo/header accent (mauve),
+#89b4fa logo/header accent (blue)
+
 Follow these instructions using the Catppuccin Mocha color palette, JetBrains Mono Nerd Font, and Font Awesome icons:
 
 Overall Aesthetic & Layout
