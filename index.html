@@ -1,1146 +1,727 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>spoon.rip</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
-    <link rel="icon" href="assets/favicon.png" type="image/png">
-    <style>
+import React, { useState, useEffect, useRef } from 'react';
+
+// Configuration for the terminal
+const USERNAME = "visitor";
+const HOSTNAME = "portfolio"; 
+const PROMPT_SYMBOL_PRIMARY = "~";
+const PROMPT_SYMBOL_SECONDARY = "$";
+
+// --- AnimatedBackground Component Definition ---
+const AnimatedBackground = () => {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
+    }
+
+    const svgPathData = 'M 405.473 235.347 C 403.758 233.632 400.026 234.582 398.096 236.512 C 397.056 237.552 396.752 238.664 396.96 239.738 C 397.171 240.818 397.15 242.037 396.348 242.79 L 386.872 251.692 C 386.215 252.309 386.199 253.347 386.836 253.984 C 387.473 254.622 388.512 254.606 389.129 253.949 L 398.03 244.473 C 398.784 243.671 400.003 243.65 401.083 243.86 C 402.156 244.069 403.268 243.765 404.309 242.724 C 406.239 240.794 407.189 237.063 405.473 235.347 L 405.473 235.347 Z';
+    const numSVGs = 25; 
+    const colors = ['var(--ctp-blue)', 'var(--ctp-mauve)', 'var(--ctp-green)', 'var(--ctp-peach)', 'var(--ctp-yellow)', 'var(--ctp-sky)', 'var(--ctp-pink)'];
+
+    const getRandomPos = () => `${Math.random() * 100}vw`;
+    const getRandomPosV = () => `${Math.random() * 100}vh`;
+    const getRandomScale = (min, max) => min + Math.random() * (max - min);
+    const getRandomRotation = () => `${(Math.random() - 0.5) * 720}deg`; 
+    const getRandomSkew = () => `${(Math.random() - 0.5) * 45}deg`; 
+
+    for (let i = 0; i < numSVGs; i++) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'animated-svg-item'); 
+      svg.setAttribute('viewBox', '386.3686 234.4523 19.9999 20.0001');
+      svg.setAttribute('width', '50px'); 
+      svg.setAttribute('height', '50px');
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', svgPathData);
+      path.style.fill = colors[Math.floor(Math.random() * colors.length)];
+      
+      svg.appendChild(path);
+
+      const duration = 40 + Math.random() * 40; 
+      const delay = Math.random() * 30; 
+      // Doubled the opacity range for background SVGs
+      const maxOpacity = 0.1 + Math.random() * 0.2; // Range: 0.1 to 0.3
+
+      svg.style.setProperty('--p0-x', getRandomPos());
+      svg.style.setProperty('--p0-y', getRandomPosV());
+      svg.style.setProperty('--s0', getRandomScale(0.2, 0.6)); 
+      svg.style.setProperty('--r0', getRandomRotation());
+      svg.style.setProperty('--sk0x', getRandomSkew());
+      svg.style.setProperty('--sk0y', getRandomSkew());
+
+      svg.style.setProperty('--p1-x', getRandomPos());
+      svg.style.setProperty('--p1-y', getRandomPosV());
+      svg.style.setProperty('--s1', getRandomScale(0.5, 1.5));
+      svg.style.setProperty('--r1', getRandomRotation());
+      svg.style.setProperty('--sk1x', getRandomSkew());
+      svg.style.setProperty('--sk1y', getRandomSkew());
+
+      svg.style.setProperty('--p2-x', getRandomPos());
+      svg.style.setProperty('--p2-y', getRandomPosV());
+      svg.style.setProperty('--s2', getRandomScale(0.8, 2.5)); 
+      svg.style.setProperty('--r2', getRandomRotation());
+      svg.style.setProperty('--sk2x', getRandomSkew());
+      svg.style.setProperty('--sk2y', getRandomSkew());
+
+      svg.style.setProperty('--p3-x', getRandomPos());
+      svg.style.setProperty('--p3-y', getRandomPosV());
+      svg.style.setProperty('--s3', getRandomScale(0.5, 1.5));
+      svg.style.setProperty('--r3', getRandomRotation());
+      svg.style.setProperty('--sk3x', getRandomSkew());
+      svg.style.setProperty('--sk3y', getRandomSkew());
+
+      svg.style.setProperty('--p4-x', getRandomPos());
+      svg.style.setProperty('--p4-y', getRandomPosV());
+      svg.style.setProperty('--s4', getRandomScale(0.2, 0.6));
+      svg.style.setProperty('--r4', getRandomRotation());
+      svg.style.setProperty('--sk4x', getRandomSkew());
+      svg.style.setProperty('--sk4y', getRandomSkew());
+
+      svg.style.setProperty('--max-opacity', maxOpacity);
+      svg.style.animation = `warpBounceFade ${duration}s ${delay}s infinite alternate`;
+      container.appendChild(svg);
+    }
+  }, []); 
+
+  return (
+      <div ref={containerRef} className="background-animation-container"></div>
+  );
+};
+// --- End of AnimatedBackground Component ---
+
+// --- Panel Base Style ---
+// Adjusted base opacity for panels - more transparent
+const panelBaseClasses = "bg-[var(--ctp-mantle)] bg-opacity-60 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-[var(--ctp-surface0)] text-[var(--ctp-subtext0)] text-xs z-10";
+
+// --- SystemInfoPanel Component Definition ---
+const SystemInfoPanel = () => {
+    const [uptime, setUptime] = useState("0h 0m 0s");
+    const [memoryUsage, setMemoryUsage] = useState("--- MiB / 512MiB");
+    const [diskUsage, setDiskUsage] = useState("--.- GiB / 6.0GiB");
+    const startTimeRef = useRef(Date.now());
+
+    useEffect(() => {
+        const uptimeInterval = setInterval(() => {
+            const elapsedSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+            const hours = Math.floor(elapsedSeconds / 3600);
+            const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+            const seconds = elapsedSeconds % 60;
+            setUptime(`${hours}h ${minutes}m ${seconds}s`);
+        }, 1000);
+
+        const statsInterval = setInterval(() => {
+            const usedMem = Math.floor(100 + Math.random() * 350); 
+            setMemoryUsage(`${usedMem}MiB / 512MiB`);
+            const usedDisk = (1.0 + Math.random() * 4.5).toFixed(1); 
+            setDiskUsage(`${usedDisk}GiB / 6.0GiB`);
+        }, 3000); 
+
+        return () => {
+            clearInterval(uptimeInterval);
+            clearInterval(statsInterval);
+        };
+    }, []);
+
+    const stats = [
+        { icon: "fas fa-box-open", label: "Pkgs", value: "> 9000", color: "var(--ctp-peach)" },
+        { icon: "fas fa-memory", label: "Mem", value: memoryUsage, color: "var(--ctp-green)" },
+        { icon: "fas fa-hdd", label: "Disk", value: diskUsage, color: "var(--ctp-yellow)" },
+    ];
+
+    return (
+        <div className={`${panelBaseClasses} w-full`}>
+            <div className="flex items-center mb-3">
+                <i className="fas fa-spoon fa-2x text-[var(--ctp-mauve)] mr-3"></i> 
+                <div>
+                    <p className="font-bold text-[var(--ctp-text)]">{USERNAME}@{HOSTNAME}</p>
+                    <p className="text-[var(--ctp-subtext1)]">spoonOS</p> 
+                </div>
+            </div>
+            <div className="mb-3">
+                <p><i className="fas fa-clock mr-2 text-[var(--ctp-sky)]"></i>Uptime: {uptime}</p>
+            </div>
+            <div>
+                {stats.map(stat => (
+                    <div key={stat.label} className="flex items-center justify-between mb-1">
+                        <span className="flex items-center">
+                            <i className={`${stat.icon} mr-2 w-4 text-center`} style={{color: stat.color}}></i>
+                            {stat.label}:
+                        </span>
+                        <span>{stat.value}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+// --- End of SystemInfoPanel Component ---
+
+// --- AboutMePanel Component Definition ---
+const AboutMePanel = () => {
+    return (
+        <div className={`${panelBaseClasses} w-full mt-4`}>
+            <h2 className="text-sm font-bold text-[var(--ctp-text)] mb-2 flex items-center">
+                <i className="fas fa-user-circle mr-2 text-[var(--ctp-lavender)]"></i>About Me
+            </h2>
+            <p className="text-xs leading-relaxed">
+                Hi, I'm the creator of this interactive portfolio. I enjoy building cool things with code and exploring new technologies. This terminal is a fun project to showcase some of my skills and personality.
+            </p>
+            <p className="text-xs leading-relaxed mt-2">
+                Feel free to explore the commands!
+            </p>
+        </div>
+    );
+};
+// --- End of AboutMePanel Component ---
+
+// --- LinksPanel Component Definition ---
+const LinksPanel = () => {
+    const links = [
+        { name: "GitHub", url: "https://github.com/spoondev", icon: "fab fa-github", color: "var(--ctp-sapphire)"},
+        { name: "LinkedIn", url: "https://linkedin.com/in/spoondeveloper", icon: "fab fa-linkedin", color: "var(--ctp-blue)"},
+        { name: "Email", url: "mailto:hello@spoon.rip", icon: "fas fa-envelope", color: "var(--ctp-teal)"},
+    ];
+    return (
+        <div className={`${panelBaseClasses} w-full mt-4`}>
+            <h2 className="text-sm font-bold text-[var(--ctp-text)] mb-2 flex items-center">
+                <i className="fas fa-link mr-2 text-[var(--ctp-sky)]"></i>Quick Links
+            </h2>
+            <ul>
+                {links.map(link => (
+                    <li key={link.name} className="mb-1.5">
+                        <a 
+                            href={link.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="flex items-center hover:text-[var(--ctp-text)] transition-colors"
+                        >
+                            <i className={`${link.icon} mr-2 w-4 text-center`} style={{color: link.color}}></i>
+                            {link.name}
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+};
+// --- End of LinksPanel Component ---
+
+
+const BOOT_SEQUENCE_TEXT = [
+  "spoonOS v1.0 initializing...", 
+  "CPU: Dual Core @ 3.00GHz (Virtual)",
+  "Memory: 512MiB Total",
+  "Detecting display manager... OK",
+  "Mounting virtual file systems... DONE",
+  "Initializing network services (eth0)... CONNECTED",
+  "Starting UI services (JetBrains Mono Nerd Font)... LOADED",
+  "Welcome to the Portfolio Terminal Experience",
+  "Desktop Environment: SpoonDE", 
+  "Type 'help' to see available commands.",
+];
+
+const AVAILABLE_COMMANDS = [
+  { name: 'help', description: 'Show this help menu', icon: 'fas fa-question-circle' },
+  { name: 'resume', description: 'View my professional resume', icon: 'fas fa-file-alt' },
+  { name: 'skills', description: 'List my technical skills', icon: 'fas fa-code' },
+  { name: 'projects', description: 'View my portfolio projects', icon: 'fas fa-briefcase' },
+  { name: 'contact', description: 'Contact information', icon: 'fas fa-comment-dots' },
+  { name: 'github', description: 'View my GitHub profile', icon: 'fab fa-github' },
+  { name: 'linkedin', description: 'View my LinkedIn profile', icon: 'fab fa-linkedin' },
+  { name: 'logo', description: 'Display the animated logo', icon: 'fas fa-terminal' },
+  { name: 'meme', description: 'Display a random wholesome meme', icon: 'fas fa-image' },
+  { name: 'dankmeme', description: 'Display a random dank meme', icon: 'fas fa-image' },
+  { name: 'whoami', description: 'Display your current user', icon: 'fas fa-user-secret' },
+  { name: 'clear', description: 'Clear the terminal screen', icon: 'fas fa-trash-alt' },
+  { name: 'boot', description: 'Reboot the system', icon: 'fas fa-power-off' },
+  { name: 'warning', description: 'Display a sample warning', icon: 'fas fa-exclamation-triangle' },
+];
+
+// Helper to create output line with prompt
+const createPromptLine = (command) => ({
+  type: 'prompt',
+  text: `${USERNAME}@${HOSTNAME}:${PROMPT_SYMBOL_PRIMARY}${PROMPT_SYMBOL_SECONDARY} ${command}`,
+});
+
+// Main App Component
+export default function App() {
+  const [output, setOutput] = useState([]);
+  const [commandHistory, setCommandHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [inputValue, setInputValue] = useState('');
+  const [isBooting, setIsBooting] = useState(true);
+  const [currentBootLine, setCurrentBootLine] = useState(0);
+  const [suggestions, setSuggestions] = useState(AVAILABLE_COMMANDS);
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+
+  const inputRef = useRef(null);
+  const terminalEndRef = useRef(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentDateTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (isBooting) {
+      if (currentBootLine < BOOT_SEQUENCE_TEXT.length) {
+        const timer = setTimeout(() => {
+          setOutput(prev => [...prev, { type: 'boot', text: BOOT_SEQUENCE_TEXT[currentBootLine] }]);
+          setCurrentBootLine(prev => prev + 1);
+        }, 60); 
+        return () => clearTimeout(timer);
+      } else {
+        const timer = setTimeout(() => {
+          setIsBooting(false);
+          setOutput(prev => [...prev, { type: 'warning', text: `⚠️ Portfolio initialized. Type 'help' for commands.` }]);
+          showInitialSuggestions();
+        }, 250);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isBooting, currentBootLine]);
+
+  useEffect(() => {
+    if (!isBooting && inputRef.current) {
+      inputRef.current.focus();
+    }
+    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [output, isBooting]);
+
+  const showInitialSuggestions = () => {
+    setSuggestions(AVAILABLE_COMMANDS.slice(0, 6));
+  };
+
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+    const lcValue = e.target.value.toLowerCase();
+    if (lcValue) {
+      setSuggestions(AVAILABLE_COMMANDS.filter(cmd => cmd.name.startsWith(lcValue)));
+    } else {
+      showInitialSuggestions();
+    }
+  };
+
+  const executeCommand = async (commandToExecute) => {
+    const command = commandToExecute.trim();
+    if (!command) return;
+
+    setOutput(prev => [...prev, createPromptLine(command)]);
+
+    if (command !== commandHistory[commandHistory.length - 1]) {
+      setCommandHistory(prev => [...prev, command]);
+    }
+    setHistoryIndex(commandHistory.length); 
+
+    const lcCommand = command.toLowerCase();
+    let newOutput = [];
+
+    switch (lcCommand) {
+      case 'help':
+        newOutput.push({ type: 'info', text: 'Available commands:' });
+        AVAILABLE_COMMANDS.forEach(cmd => {
+          newOutput.push({ type: 'help', text: `  <i class="${cmd.icon} w-5 inline-block text-[var(--ctp-mauve)]"></i> ${cmd.name.padEnd(10, ' ')} - ${cmd.description}` });
+        });
+        break;
+      case 'clear':
+        setOutput([]);
+        return; 
+      case 'resume':
+        newOutput.push({ type: 'info', text: 'RESUME'.padStart(14 + 'RESUME'.length/2, '=').padEnd(28, '=') });
+        newOutput.push({ type: 'info', text: 'SAM KING - IT Systems Administrator' });
+        newOutput.push({ type: 'info', text: 'Summary: 10+ years in managing complex IT infrastructure...' });
+        newOutput.push({ type: 'html', html: `<span>View full resume: <a href="https://profile.indeed.com/p/samk-frdy9mv" target="_blank" rel="noopener noreferrer" class="text-[var(--ctp-blue)] hover:underline">profile.indeed.com/p/samk-frdy9mv</a></span>` });
+        break;
+      case 'skills':
+        newOutput.push({ type: 'info', text: 'SKILLS'.padStart(14 + 'SKILLS'.length/2, '=').padEnd(28, '=') });
+        newOutput.push({ type: 'info', text: '<i class="fab fa-aws text-[var(--ctp-peach)]"></i> Cloud: AWS, Azure, GCP' });
+        newOutput.push({ type: 'info', text: '<i class="fas fa-network-wired text-[var(--ctp-yellow)]"></i> Networking: Cisco, Meraki, UniFi' });
+        newOutput.push({ type: 'info', text: '<i class="fas fa-server text-[var(--ctp-green)]"></i> Systems: Linux, Windows Server, AD' });
+        newOutput.push({ type: 'info', text: '<i class="fab fa-react text-[var(--ctp-sky)]"></i> Dev: JS, Python, Go, React, Node' });
+        break;
+      case 'projects':
+        newOutput.push({ type: 'info', text: 'PROJECTS'.padStart(14 + 'PROJECTS'.length/2, '=').padEnd(28, '=') });
+        newOutput.push({ type: 'info', text: '<i class="fas fa-rocket text-[var(--ctp-mauve)]"></i> Project Alpha: A cool app (React, Firebase)' });
+        newOutput.push({ type: 'info', text: '<i class="fas fa-chart-bar text-[var(--ctp-blue)]"></i> DataViz Beta: Visualization tool (D3.js, Python)' });
+        break;
+      case 'contact':
+        newOutput.push({ type: 'info', text: 'CONTACT'.padStart(14 + 'CONTACT'.length/2, '=').padEnd(28, '=') });
+        newOutput.push({ type: 'html', html: `<span><i class="fas fa-envelope text-[var(--ctp-teal)]"></i> Email: <a href="mailto:hello@spoon.rip" class="text-[var(--ctp-sky)] hover:underline">hello@spoon.rip</a></span>` });
+        newOutput.push({ type: 'html', html: `<span><i class="fab fa-linkedin text-[var(--ctp-blue)]"></i> LinkedIn: <a href="https://linkedin.com/in/spoondeveloper" target="_blank" rel="noopener noreferrer" class="text-[var(--ctp-blue)] hover:underline">linkedin.com/in/spoondeveloper</a></span>` });
+        newOutput.push({ type: 'html', html: `<span><i class="fab fa-github text-[var(--ctp-sapphire)]"></i> GitHub: <a href="https://github.com/spoondev" target="_blank" rel="noopener noreferrer" class="text-[var(--ctp-sapphire)] hover:underline">github.com/spoondev</a></span>` });
+        break;
+      case 'github':
+        newOutput.push({ type: 'info', text: 'Opening GitHub profile...' });
+        window.open('https://github.com/spoondev', '_blank');
+        break;
+      case 'linkedin':
+        newOutput.push({ type: 'info', text: 'Opening LinkedIn profile...' });
+        window.open('https://linkedin.com/in/spoondeveloper', '_blank');
+        break;
+      case 'logo':
+        newOutput.push({ type: 'logo', text: 'SPOON.RIP' });
+        break;
+      case 'meme':
+      case 'dankmeme':
+        const memeType = lcCommand === 'dankmeme' ? 'dankmemes' : 'wholesomememes';
+        newOutput.push({ type: 'loading', text: `Fetching a ${memeType.replace('memes','')} meme...` });
+        setOutput(prev => [...prev, ...newOutput]);
+        newOutput = []; 
+        try {
+          const response = await fetch(`https://meme-api.com/gimme/${memeType}`);
+          if (!response.ok) throw new Error(`Network response: ${response.status}`);
+          const data = await response.json();
+          setOutput(prev => prev.filter(item => item.type !== 'loading'));
+          newOutput.push({
+            type: 'meme',
+            title: data.title,
+            author: data.author,
+            subreddit: data.subreddit,
+            url: data.url,
+            postLink: data.postLink,
+            ups: data.ups,
+          });
+        } catch (error) {
+          setOutput(prev => prev.filter(item => item.type !== 'loading'));
+          newOutput.push({ type: 'error', text: `Error fetching meme: ${error.message}` });
+        }
+        break;
+      case 'whoami':
+        newOutput.push({ type: 'info', text: `${USERNAME}` });
+        break;
+      case 'boot':
+      case 'reboot':
+        newOutput.push({ type: 'warning', text: 'Rebooting system...' });
+        setOutput(prev => [...prev, ...newOutput]);
+        setTimeout(() => {
+          setOutput([]);
+          setCurrentBootLine(0);
+          setCommandHistory([]);
+          setHistoryIndex(-1);
+          setIsBooting(true);
+        }, 1000);
+        return;
+      case 'warning':
+        newOutput.push({ type: 'warning', text: '⚠️ This is a sample warning message!' });
+        break;
+      default:
+        newOutput.push({ type: 'error', text: `Command not found: ${command}. Type 'help' for available commands.` });
+    }
+
+    setOutput(prev => [...prev, ...newOutput]);
+    setInputValue('');
+    showInitialSuggestions();
+  };
+  
+  const handleCommandSubmit = (e) => {
+    e.preventDefault();
+    executeCommand(inputValue);
+  };
+
+  const handleSuggestionClick = (commandName) => {
+    setInputValue(commandName);
+    inputRef.current?.focus();
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (commandHistory.length > 0) {
+        const newIndex = historyIndex <= 0 ? commandHistory.length - 1 : historyIndex - 1;
+        setHistoryIndex(newIndex);
+        setInputValue(commandHistory[newIndex]);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (commandHistory.length > 0) {
+        const newIndex = historyIndex >= commandHistory.length - 1 || historyIndex === -1 ? 0 : historyIndex + 1;
+         if (historyIndex >= commandHistory.length -1 && inputValue === commandHistory[commandHistory.length-1]) {
+            setInputValue('');
+            setHistoryIndex(commandHistory.length);
+        } else {
+            setHistoryIndex(newIndex);
+            setInputValue(commandHistory[newIndex]);
+        }
+      }
+    } else if (e.key === 'Tab') {
+        e.preventDefault();
+        const lcValue = inputValue.toLowerCase();
+        const matched = AVAILABLE_COMMANDS.filter(cmd => cmd.name.startsWith(lcValue));
+        if (matched.length === 1) {
+            setInputValue(matched[0].name);
+        } else if (matched.length > 1) {
+            setSuggestions(matched);
+        }
+    }
+  };
+
+  const OutputLine = ({ item }) => {
+    const baseStyle = "py-0.5 px-1 break-words whitespace-pre-wrap";
+
+    switch (item.type) {
+      case 'prompt': 
+        return (
+          <div className={`${baseStyle}`}>
+            <span className="text-[var(--ctp-text)]">{USERNAME}@{HOSTNAME}</span>
+            <span className="text-[var(--ctp-overlay1)]">:</span>
+            <span className="text-[var(--ctp-mauve)]">{PROMPT_SYMBOL_PRIMARY}</span>
+            <span className="text-[var(--ctp-green)]">{PROMPT_SYMBOL_SECONDARY}</span>
+            <span className="text-[var(--ctp-text)]"> {item.text.substring(item.text.indexOf(PROMPT_SYMBOL_SECONDARY) + 2)}</span>
+          </div>
+        );
+      case 'info': return <div className={`${baseStyle} text-[var(--ctp-subtext0)]`} dangerouslySetInnerHTML={{ __html: item.text }}></div>;
+      case 'error': return <div className={`${baseStyle} text-[var(--ctp-red)]`}><i className="fas fa-times-circle mr-2"></i>{item.text}</div>;
+      case 'warning': return <div className={`${baseStyle} text-[var(--ctp-peach)]`}><i className="fas fa-exclamation-triangle mr-2"></i>{item.text}</div>;
+      case 'boot': return <div className={`${baseStyle} text-[var(--ctp-green)]`}>{item.text}</div>;
+      case 'loading': return <div className={`${baseStyle} text-[var(--ctp-blue)] animate-pulse`}><i className="fas fa-spinner fa-spin mr-2"></i>{item.text}</div>;
+      case 'help': return <div className={`${baseStyle} text-[var(--ctp-subtext1)]`} dangerouslySetInnerHTML={{ __html: item.text }}></div>;
+      case 'html': return <div className={`${baseStyle} text-[var(--ctp-subtext0)]`} dangerouslySetInnerHTML={{ __html: item.html }}></div>;
+      case 'logo':
+        return (
+          <div className={`${baseStyle} text-[var(--ctp-mauve)] font-logo text-5xl my-2 animated-catppuccin-logo`}>
+            {item.text.split('').map((char, index) => (
+              <span key={index} style={{ animationDelay: `${index * 0.1}s` }} className="inline-block">{char}</span>
+            ))}
+          </div>
+        );
+      case 'meme':
+        return (
+          <div className={`${baseStyle} my-2 p-3 border border-[var(--ctp-surface2)] rounded-md bg-[var(--ctp-surface1)] bg-opacity-60 max-w-md shadow-md`}> {/* Adjusted meme opacity */}
+            <p className="text-[var(--ctp-lavender)] font-semibold">{item.title}</p>
+            <p className="text-xs text-[var(--ctp-subtext0)] mb-2">by {item.author} in r/{item.subreddit} ({item.ups} upvotes)</p>
+            <img src={item.url} alt={item.title} className="max-w-full h-auto rounded my-2 border border-[var(--ctp-surface2)]" onError={(e) => e.target.src = 'https://placehold.co/400x300/f38ba8/cdd6f4?text=Meme+Error'} />
+            <a href={item.postLink} target="_blank" rel="noopener noreferrer" className="text-[var(--ctp-sky)] hover:underline text-sm">View on Reddit</a>
+          </div>
+        );
+      default: return <div className={`${baseStyle} text-[var(--ctp-text)]`} dangerouslySetInnerHTML={{ __html: String(item.text) }}></div>;
+    }
+  };
+
+  const taskbarItems = [
+      { name: "System Info", icon: "fas fa-info-circle", color: "var(--ctp-sky)"},
+      { name: "About Me", icon: "fas fa-user", color: "var(--ctp-lavender)"},
+      { name: "Links", icon: "fas fa-link", color: "var(--ctp-teal)"},
+      { name: "Terminal", icon: "fas fa-terminal", color: "var(--ctp-green)"},
+  ];
+
+  return (
+    <div 
+      className="text-[var(--ctp-text)] text-sm font-jetbrains-mono min-h-screen flex flex-col selection:bg-[var(--ctp-green)] selection:text-[var(--ctp-base)]"
+    >
+      <AnimatedBackground />
+      <style jsx global>{`
+        /* ... (Catppuccin variables and global styles remain the same) ... */
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap');
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css');
+
         :root {
-            --bg-color: #000000;
-            --terminal-bg: #080808;
-            --text-color: #e0ffe0;
-            --prompt-color: #c4ffc4;
-            --command-color: #ffffff;
-            --link-color: #c4ffc4;
-            --warning-color: #ffcc00;
-            --error-color: #ff6060;
-            --boot-color: #88ff88;
-            --glow-color: rgba(224, 255, 224, 0.45);
-            --scanline-color: rgba(224, 255, 224, 0.07);
-            --scan-width: 2px;
-            --scan-fps: 60;
-        } else if (lowerCommand === 'dankmeme') {
-                const loadingMsg = `<span class="loading">Fetching a dank meme for you...</span>`;
-                addOutput(loadingMsg);
-
-                // Fetch meme from the Meme API - dank meme version
-                fetch('https://meme-api.com/gimme/dankmemes')
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Remove loading message
-                        outputContainer.lastChild.remove();
-
-                        const memeHtml = `
-<div style="margin: 10px 0;">
-  <div style="margin-bottom: 8px;">
-    <span class="command">${data.title}</span> - by ${data.author} in r/${data.subreddit}
-  </div>
-  <div>
-    <img src="${data.url}" alt="${data.title}" style="max-width: 100%; border-radius: 5px; border: 1px solid rgba(196, 255, 196, 0.3);">
-  </div>
-  <div style="margin-top: 8px;">
-    <a href="${data.postLink}" target="_blank">View on Reddit</a> • ${data.ups} upvotes
-  </div>
-</div>`;
-
-                        addOutput(memeHtml);
-                    })
-                    .catch(error => {
-                        // Remove loading message
-                        outputContainer.lastChild.remove();
-
-                        console.error('Error fetching meme:', error);
-                        addOutput(`<span class="error">Error fetching meme: ${error.message}</span>`);
-                    });
-            }
-
-        body, html {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Roboto Mono', monospace;
-            overflow: hidden;
-            position: relative;
+          --ctp-rosewater: #f5e0dc; --ctp-flamingo: #f2cdcd; --ctp-pink: #f5c2e7; --ctp-mauve: #cba6f7; --ctp-red: #f38ba8; --ctp-maroon: #eba0ac; --ctp-peach: #fab387; --ctp-yellow: #f9e2af; --ctp-green: #a6e3a1; --ctp-teal: #94e2d5; --ctp-sky: #89dceb; --ctp-sapphire: #74c7ec; --ctp-blue: #89b4fa; --ctp-lavender: #b4befe; --ctp-text: #cdd6f4; --ctp-subtext1: #bac2de; --ctp-subtext0: #a6adc8; --ctp-overlay2: #9399b2; --ctp-overlay1: #7f849c; --ctp-overlay0: #6c7086; --ctp-surface2: #585b70; --ctp-surface1: #45475a; --ctp-surface0: #313244; --ctp-base: #1e1e2e; --ctp-mantle: #181825; --ctp-crust: #11111b;
         }
-
-        .container {
-            height: 100%;
-            padding: 20px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
+        body {
+          font-family: 'JetBrains Mono', monospace;
+          background-color: var(--ctp-crust); 
+          margin: 0; 
+          overflow-x: hidden; /* Prevent horizontal scroll from animations */
+          overflow-y: auto; /* Allow vertical scroll if content exceeds viewport */
         }
+        .font-jetbrains-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-logo { font-family: 'VT323', monospace; }
 
-        .terminal {
-            flex: 1;
-            background-color: var(--terminal-bg);
-            border-radius: 15px;
-            padding: 25px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            position: relative;
-            box-shadow: inset 0 0 30px rgba(224, 255, 224, 0.15);
-            border: 1px solid rgba(224, 255, 224, 0.3);
-            transform: perspective(800px) rotateX(0.8deg);
-            margin: 10px 20px;
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS */
-            scroll-behavior: smooth; /* Smooth scrolling for all browsers */
-            overscroll-behavior-y: contain; /* Prevent scroll chaining */
-            height: calc(100vh - 130px); /* Ensure proper height */
+        .animated-catppuccin-logo span {
+          display: inline-block;
+          animation: catppuccinTextGlow 2s infinite alternate;
         }
-
-        .output {
-            margin-bottom: 15px;
-            text-shadow: 0 0 5px var(--text-color);
-            line-height: 1.3;
+        @keyframes catppuccinTextGlow {
+          from { text-shadow: 0 0 5px var(--ctp-mauve), 0 0 10px var(--ctp-mauve); }
+          to { text-shadow: 0 0 10px var(--ctp-mauve), 0 0 20px var(--ctp-mauve), 0 0 25px var(--ctp-pink); }
         }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--ctp-mantle); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--ctp-surface1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--ctp-surface2); }
 
-        .prompt {
-            color: var(--prompt-color);
-            display: inline-block;
-            text-shadow: 0 0 5px var(--prompt-color);
-        }
-
-        .command {
-            color: var(--command-color);
-            text-shadow: 0 0 5px var(--command-color);
-        }
-
-        .warning {
-            color: var(--warning-color);
-            text-shadow: 0 0 5px var(--warning-color);
-        }
-
-        .error {
-            color: var(--error-color);
-            text-shadow: 0 0 5px var(--error-color);
-        }
-
-        .boot-text {
-            color: var(--boot-color);
-            text-shadow: 0 0 3px var(--boot-color);
-            opacity: 0.9;
-        }
-
-        .input-line {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap; /* Allow wrapping on small screens */
-        }
-
-        #commandInput {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--command-color);
-            font-family: 'Roboto Mono', monospace;
-            font-size: 1em;
-            outline: none;
-            caret-color: var(--text-color);
-            padding: 0;
-            margin-left: 8px;
-            text-shadow: 0 0 5px var(--command-color);
-            min-width: 60%; /* Ensure input has enough width on small screens */
-        }
-
-        .blink {
-            animation: blink-animation 1s steps(2, start) infinite;
-        }
-
-        @keyframes blink-animation {
-            to {
-                visibility: hidden;
-            }
-        }
-
-        /* Animated text logo */
-        .animated-logo {
-            font-family: 'VT323', monospace;
-            font-size: 3em;
-            color: var(--text-color);
-            text-shadow: 0 0 10px var(--text-color), 0 0 20px var(--text-color);
-            margin: 10px 0;
-            position: relative;
-            display: inline-block;
-            letter-spacing: 2px;
-        }
-
-        .animated-logo span {
-            display: inline-block;
-            transform: translateY(0);
-            transition: transform 0.3s ease;
-            animation: textGlow 2s infinite alternate;
-        }
-
-        .animated-logo:hover span {
-            animation: textPulse 0.5s infinite alternate;
-        }
-
-        @keyframes textGlow {
-            from { text-shadow: 0 0 10px var(--text-color), 0 0 20px var(--text-color); }
-            to { text-shadow: 0 0 15px var(--text-color), 0 0 30px var(--text-color), 0 0 40px var(--text-color); }
-        }
-
-        @keyframes textPulse {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-5px); }
-        }
-
-        /* CRT effects */
-        .scanlines {
-            position: relative;
-        }
-
-        .scanlines::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-                to bottom,
-                transparent 50%,
-                rgba(0, 0, 0, 0.3) 51%
-            );
-            background-size: 100% 4px;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .scanlines::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(18, 16, 16, 0.1);
-            opacity: 0;
-            z-index: 2;
-            pointer-events: none;
-            animation: flicker 0.15s infinite;
-        }
-
-        @keyframes flicker {
-            0% { opacity: 0.55; }
-            10% { opacity: 0.52; }
-            20% { opacity: 0.59; }
-            30% { opacity: 0.51; }
-            40% { opacity: 0.58; }
-            50% { opacity: 0.50; }
-            60% { opacity: 0.53; }
-            70% { opacity: 0.57; }
-            80% { opacity: 0.54; }
-            90% { opacity: 0.59; }
-            100% { opacity: 0.52; }
-        }
-
-        .crt-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            background-size: 100% 3px;
-            z-index: 2;
-            pointer-events: none;
-            opacity: 0.3;
-        }
-
-        .scanline {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: var(--scan-width);
-            background: var(--scanline-color);
-            animation: scanline 10s linear infinite;
-            opacity: 0.7;
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        @keyframes scanline {
-            0% {
-                transform: translateY(0%);
-            }
-            100% {
-                transform: translateY(100%);
-            }
-        }
-
-        .glow {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            box-shadow: inset 0 0 150px var(--glow-color);
-            pointer-events: none;
-            z-index: 3;
-            border-radius: 15px;
-        }
-
-        .flicker {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(224, 255, 224, 0.03);
-            opacity: 0;
-            pointer-events: none;
-            z-index: 4;
-            animation: flicker 0.3s infinite;
-        }
-
-        /* Screen warp effect */
-        .crt-container {
-            position: relative;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        .crt-content {
-            height: 100%;
-            width: 100%;
-            position: relative;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 0 30px rgba(224, 255, 224, 0.2);
-        }
-
-        .crt-bezel {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8),
-                        inset 0 0 300px rgba(0, 0, 0, 0.5);
-            border-radius: 15px;
-            pointer-events: none;
-            z-index: 6;
-        }
-
-        .crt-curvature {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(
-                circle at center,
-                transparent 50%,
-                rgba(0, 0, 0, 0.35) 100%
-            );
-            pointer-events: none;
-            z-index: 5;
-            border-radius: 15px;
-        }
-
-        a {
-            color: var(--link-color);
-            text-decoration: none;
-            text-shadow: 0 0 5px var(--link-color);
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-
-            .terminal {
-                padding: 15px;
-                margin: 5px;
-                transform: none; /* Remove perspective on mobile */
-            }
-
-            .animated-logo {
-                font-size: 2em;
-            }
-
-            .prompt {
-                font-size: 0.9em;
-            }
-
-            #commandInput {
-                font-size: 0.9em;
-            }
-
-            .input-line {
-                margin-top: 8px;
-            }
-
-            /* Reduce CRT effects on mobile for better performance */
-            .scanlines::before,
-            .scanlines::after {
-                opacity: 0.5;
-            }
-
-            /* Make controls more touch-friendly */
-            .power-button {
-                width: 30px;
-                height: 30px;
-                bottom: 15px;
-                right: 15px;
-            }
-
-            .switch-label span {
-                padding: 5px 10px;
-                font-size: 14px;
-            }
-
-            /* Command suggestions styling for mobile */
-            .command-suggestions {
-                flex-wrap: wrap;
-                justify-content: flex-start;
-            }
-
-            .suggestion-item {
-                margin: 5px;
-                padding: 8px 12px;
-            }
-        }
-
-        /* Power button */
-        .power-button {
-            position: absolute;
-            bottom: 20px;
-            right: 30px;
-            width: 20px;
-            height: 20px;
-            background-color: #222;
-            border-radius: 50%;
-            border: 2px solid #444;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .power-button:hover {
-            background-color: #333;
-            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-        }
-
-        .power-led {
-            position: absolute;
-            bottom: 23px;
-            right: 60px;
-            width: 8px;
-            height: 8px;
-            background-color: rgba(100, 255, 100, 0.8);
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(100, 255, 100, 0.8);
-            z-index: 10;
-            animation: led-pulse 3s infinite;
-        }
-
-        @keyframes led-pulse {
-            0% { opacity: 0.8; }
-            50% { opacity: 1; }
-            100% { opacity: 0.8; }
-        }
-
-        /* Boot sequence overlay */
-        .boot-sequence {
+        .background-animation-container {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            padding: 2rem;
-            box-sizing: border-box;
-            overflow: auto;
-            font-family: 'Roboto Mono', monospace;
-            color: var(--boot-color);
-            text-shadow: 0 0 3px var(--boot-color);
-            opacity: 0.95;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: -2; 
+            background-color: var(--ctp-crust); 
         }
-
-        .boot-line {
-            margin-bottom: 0.25rem;
-            animation: boot-appear 0.05s both;
-        }
-
-        @keyframes boot-appear {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .boot-warning {
-            color: var(--warning-color);
-            text-shadow: 0 0 3px var(--warning-color);
-        }
-
-        .boot-error {
-            color: var(--error-color);
-            text-shadow: 0 0 3px var(--error-color);
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        /* Switch styling from CSS CRT Effect */
-        .switch-label {
+        .animated-svg-item { 
             position: absolute;
-            bottom: 20px;
-            left: 30px;
-            z-index: 10;
-            cursor: pointer;
-            color: #444;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            opacity: 0;
+            animation-iteration-count: infinite;
+            animation-timing-function: ease-in-out;
+            transform-origin: center center;
         }
-
-        .switch-label span {
-            padding: 3px 7px;
-            display: block;
-            background: #222;
-            border-radius: 4px;
-            border: 1px solid #444;
+        @keyframes warpBounceFade {
+            0% {
+                transform: translate(var(--p0-x), var(--p0-y)) scale(var(--s0)) rotate(var(--r0)) skew(var(--sk0x), var(--sk0y));
+                opacity: 0;
+            }
+            25% {
+                transform: translate(var(--p1-x), var(--p1-y)) scale(var(--s1)) rotate(var(--r1)) skew(var(--sk1x), var(--sk1y));
+                opacity: var(--max-opacity);
+            }
+            50% {
+                transform: translate(var(--p2-x), var(--p2-y)) scale(var(--s2)) rotate(var(--r2)) skew(var(--sk2x), var(--sk2y));
+                opacity: var(--max-opacity);
+            }
+            75% {
+                transform: translate(var(--p3-x), var(--p3-y)) scale(var(--s3)) rotate(var(--r3)) skew(var(--sk3x), var(--sk3y));
+                opacity: var(--max-opacity);
+            }
+            100% {
+                transform: translate(var(--p4-x), var(--p4-y)) scale(var(--s4)) rotate(var(--r4)) skew(var(--sk4x), var(--sk4y));
+                opacity: 0;
+            }
         }
-
-        .switch-label:hover span {
-            background-color: #333;
-            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-            color: #666;
+        .taskbar-item .taskbar-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.2s, visibility 0.2s;
         }
-
-        #switch {
-            display: none;
-        }
-
-        #switch:checked ~ .crt-container .crt-content {
+        .taskbar-item:hover .taskbar-tooltip {
+            visibility: visible;
             opacity: 1;
         }
-
-        #switch:not(:checked) ~ .crt-container .crt-content {
-            animation: shutdown 0.5s forwards;
-        }
-
-        @keyframes shutdown {
-            0% { opacity: 1; }
-            60% { opacity: 1; transform: scale(1.0); }
-            65% { opacity: 0.3; transform: scale(0.95, 0.1); }
-            70% { opacity: 0.2; }
-            100% { opacity: 0; transform: scale(0.95, 0.01); }
-        }
-
-        /* Command suggestions styling */
-        .command-suggestions {
-            display: flex;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            margin-top: 10px;
-            padding-bottom: 5px;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-            scrollbar-color: var(--prompt-color) transparent;
-        }
-
-        .command-suggestions::-webkit-scrollbar {
-            height: 6px;
-        }
-
-        .command-suggestions::-webkit-scrollbar-thumb {
-            background-color: rgba(196, 255, 196, 0.3);
-            border-radius: 3px;
-        }
-
-        .command-suggestions::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .suggestion-item {
-            background-color: rgba(196, 255, 196, 0.1);
-            border: 1px solid rgba(196, 255, 196, 0.3);
-            border-radius: 4px;
-            padding: 5px 10px; /* Larger touch target */
-            margin-right: 10px;
-            white-space: nowrap;
-            cursor: pointer;
-            color: var(--link-color);
-            transition: background-color 0.2s;
-            user-select: none; /* Prevent text selection when tapping */
-            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
-        }
-
-        .suggestion-item:hover, .suggestion-item:active {
-            background-color: rgba(196, 255, 196, 0.3);
-            transform: scale(1.05);
-        }
-
-        /* Ensure images are responsive and dark mode friendly */
-        img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-            border-radius: 5px;
-            filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5));
-        }
-
-        /* Loading animation for memes */
-        @keyframes loading-pulse {
-            0% { opacity: 0.5; }
-            50% { opacity: 1; }
-            100% { opacity: 0.5; }
-        }
-
-        .loading {
-            animation: loading-pulse 1.5s infinite;
-            color: var(--prompt-color);
-        }
-    </style>
-</head>
-<body>
-    <div class="boot-sequence" id="bootSequence">
-        <!-- Boot sequence will be populated by JavaScript -->
-    </div>
-
-    <div class="container">
-        <input type="checkbox" id="switch" checked>
-        <label for="switch" class="switch-label">
-            <span>Power</span>
-        </label>
-
-        <div class="crt-container">
-            <div class="crt-content scanlines">
-                <div class="terminal" id="terminal">
-                    <div id="outputContainer"></div>
-                    <div class="input-line">
-                        <span class="prompt">visitor@spoon.rip:~$</span>
-                        <input type="text" id="commandInput" autocomplete="off" autofocus>
-                    </div>
-                    <div class="command-suggestions" id="commandSuggestions"></div>
-                </div>
-                <div class="crt-overlay"></div>
-                <div class="scanline"></div>
-                <div class="glow"></div>
-                <div class="flicker"></div>
-                <div class="crt-curvature"></div>
-                <div class="crt-bezel"></div>
-            </div>
+      `}</style>
+      
+      {/* Main content area with Flexbox for column layout on desktop */}
+      {/* pb-16 to make space for fixed taskbar */}
+      <main className="flex flex-col md:flex-row flex-grow p-2 sm:p-4 gap-4 relative z-10 pb-16">
+        {/* Left Column: Info Panels */}
+        <div className="md:w-72 lg:w-80 flex flex-col gap-4 order-1 md:order-none flex-shrink-0"> 
+            <SystemInfoPanel />
+            <AboutMePanel />
+            <LinksPanel />
         </div>
-        <div class="power-button"></div>
-        <div class="power-led"></div>
+
+        {/* Right Column: Terminal Window */}
+        <div className="flex-1 flex flex-col order-2 md:order-none min-w-0"> 
+            <header className="mb-0 flex justify-between items-center px-3 py-2 bg-[var(--ctp-mantle)] bg-opacity-60 backdrop-blur-sm rounded-t-lg border-b border-[var(--ctp-surface0)]"> {/* Opacity Adjusted */}
+            <div className="flex items-center">
+                <span className="w-3 h-3 bg-red-500 rounded-full inline-block mr-2"></span>
+                <span className="w-3 h-3 bg-yellow-500 rounded-full inline-block mr-2"></span>
+                <span className="w-3 h-3 bg-green-500 rounded-full inline-block mr-4"></span>
+                <h1 className="font-logo text-3xl text-[var(--ctp-mauve)] animated-catppuccin-logo">SPOON.RIP</h1>
+            </div>
+            <div className="text-xs text-[var(--ctp-subtext1)]">
+                <span><i className="fas fa-clock mr-1 text-[var(--ctp-sky)]"></i>{currentDateTime.toLocaleDateString()} {currentDateTime.toLocaleTimeString()}</span>
+            </div>
+            </header>
+
+            <div 
+            className="flex-grow bg-[var(--ctp-base)] bg-opacity-60 backdrop-blur-sm border-x border-b border-[var(--ctp-surface0)] rounded-b-lg shadow-2xl shadow-[var(--ctp-crust)] overflow-y-auto p-3 relative" // Opacity Adjusted
+            style={{minHeight: 'calc(100vh - 10rem - 4rem)'}} 
+            onClick={() => inputRef.current?.focus()}
+            >
+            <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-b-lg">
+                <div className="animate-scanline-catppuccin opacity-20 h-full w-full"></div>
+            </div>
+            <div className="absolute inset-0 pointer-events-none rounded-b-lg box-shadow-[inset_0_0_50px_rgba(166,227,161,0.05)]"></div>
+
+            <div id="output" className="mb-2">
+                {output.map((item, index) => (
+                <OutputLine key={index} item={item} />
+                ))}
+                <div ref={terminalEndRef} /> 
+            </div>
+
+            {!isBooting && (
+                <form onSubmit={handleCommandSubmit} className="flex items-center">
+                <span className="text-[var(--ctp-text)]">{USERNAME}@{HOSTNAME}</span>
+                <span className="text-[var(--ctp-overlay1)]">:</span>
+                <span className="text-[var(--ctp-mauve)]">{PROMPT_SYMBOL_PRIMARY}</span>
+                <span className="text-[var(--ctp-green)]">{PROMPT_SYMBOL_SECONDARY}</span>
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    className="flex-1 bg-transparent text-[var(--ctp-text)] outline-none pl-2 caret-[var(--ctp-rosewater)]"
+                    autoFocus
+                    autoComplete="off"
+                    spellCheck="false"
+                />
+                </form>
+            )}
+            </div>
+
+            {!isBooting && suggestions.length > 0 && (
+            <div className="mt-2 p-2 bg-[var(--ctp-mantle)] bg-opacity-60 backdrop-blur-sm border border-[var(--ctp-surface0)] rounded-md"> {/* Opacity Adjusted */}
+                <p className="text-xs text-[var(--ctp-subtext0)] mb-2">Suggestions (Tab to autocomplete):</p>
+                <div className="flex flex-wrap gap-2">
+                {suggestions.slice(0,10).map((cmd) => (
+                    <button
+                    key={cmd.name}
+                    onClick={() => handleSuggestionClick(cmd.name)}
+                    className="flex items-center bg-[var(--ctp-surface0)] hover:bg-[var(--ctp-surface1)] text-[var(--ctp-text)] px-3 py-1.5 rounded-md text-xs transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-[var(--ctp-mauve)]"
+                    title={cmd.description}
+                    >
+                    <i className={`${cmd.icon} mr-2 text-[var(--ctp-lavender)] w-4 text-center`}></i>
+                    {cmd.name}
+                    </button>
+                ))}
+                </div>
+            </div>
+            )}
+        </div>
+      </main>
+        
+      <footer className="fixed bottom-0 left-0 right-0 h-12 bg-[var(--ctp-base)] bg-opacity-70 backdrop-blur-md border-t border-[var(--ctp-surface0)] flex items-center justify-start p-2 z-30 space-x-1 sm:space-x-2"> {/* Opacity Adjusted */}
+        {taskbarItems.map(item => (
+            <div key={item.name} className="taskbar-item relative group flex items-center justify-center">
+                <button 
+                    className="p-2 rounded-md hover:bg-[var(--ctp-surface0)] transition-colors"
+                    aria-label={item.name}
+                >
+                    <i className={`${item.icon} text-lg sm:text-xl`} style={{color: item.color}}></i>
+                </button>
+                <span className="taskbar-tooltip absolute bottom-full mb-2 w-auto p-1.5 text-xs text-[var(--ctp-text)] bg-[var(--ctp-surface1)] rounded-md shadow-lg whitespace-nowrap">
+                    {item.name}
+                </span>
+            </div>
+        ))}
+        <div className="flex-grow"></div> 
+        <div className="text-xs text-[var(--ctp-subtext0)] flex items-center space-x-2 sm:space-x-3 px-1 sm:px-2">
+            <span className="hidden sm:inline-flex items-center"><i className="fas fa-cogs mr-1 text-[var(--ctp-green)]"></i>{AVAILABLE_COMMANDS.length} cmds</span>
+            <span className="inline-flex items-center"><i className="fas fa-palette mr-1 text-[var(--ctp-pink)]"></i>Catppuccin Mocha</span>
+            <span className="hidden sm:inline-flex items-center"><i className="fab fa-react mr-1 text-[var(--ctp-sky)]"></i>React</span>
+        </div>
+      </footer>
     </div>
+  );
+}
+
+// CSS for scanline animation (Tailwind doesn't directly support this complex animation easily)
+const style = document.createElement('style');
+style.innerHTML = `
+  @keyframes scanline-catppuccin {
+    0% { transform: translateY(-5%); }
+    100% { transform: translateY(105%); }
+  }
+  .animate-scanline-catppuccin {
+    animation: scanline-catppuccin 12s linear infinite;
+    background: repeating-linear-gradient(
+      transparent,
+      transparent 2px,
+      var(--ctp-green-transparent, rgba(166, 227, 161, 0.02)) 3px, 
+      var(--ctp-green-transparent, rgba(166, 227, 161, 0.02)) 4px
+    );
+  }
+  :root {
+    --ctp-green-transparent: rgba(166, 227, 161, 0.02);
+  }
+`;
+document.head.appendChild(style);
 
-    <script>
-        // Boot sequence text - shorter version
-        const bootSequenceText = [
-            "SPOON-BIOS v4.2.0, Enhanced BIOS for CULINARY Systems",
-            "Soup Processor.......: INTEL I9-12900KS @ 5.2GHz",
-            "Utensil Memory.......: 64GB DDR5-6400",
-            "Initializing CFS.... DONE",
-            "Loading Kernel...... DONE",
-            "Checking Network..... CONNECTED",
-            "JOB SEARCH MODULE.... INITIALIZED"
-        ];
-
-        // Boot sequence display - faster version
-        function displayBootSequence() {
-            const bootSequenceElement = document.getElementById('bootSequence');
-            let i = 0;
-
-            function displayNextLine() {
-                if (i < bootSequenceText.length) {
-                    const line = bootSequenceText[i];
-                    const lineElement = document.createElement('div');
-                    lineElement.className = 'boot-line';
-
-                    // Apply special styling based on line content
-                    if (line.includes('WARNING:')) {
-                        lineElement.className += ' boot-warning';
-                    } else if (line.includes('ERROR:') || line.includes('FAIL')) {
-                        lineElement.className += ' boot-error';
-                    }
-
-                    lineElement.textContent = line;
-                    bootSequenceElement.appendChild(lineElement);
-                    bootSequenceElement.scrollTop = bootSequenceElement.scrollHeight;
-
-                    i++;
-
-                    // Much faster typing speed
-                    const delay = line === "" ? 50 : 30;
-
-                    setTimeout(displayNextLine, delay);
-                } else {
-                    // Boot sequence finished
-                    bootSequenceElement.innerHTML += '<div class="boot-line blink">_</div>';
-
-                    // Dismiss boot sequence automatically after a short delay
-                    setTimeout(dismissBootSequence, 300);
-                }
-            }
-
-            // Start displaying boot sequence
-            displayNextLine();
-        }
-
-        // Dismiss boot sequence
-        function dismissBootSequence() {
-            const bootSequenceElement = document.getElementById('bootSequence');
-            bootSequenceElement.style.animation = 'fadeOut 0.5s forwards';
-
-            setTimeout(() => {
-                bootSequenceElement.classList.add('hidden');
-                commandInput.focus();
-                // Show animated logo after boot sequence
-                showAnimatedLogo();
-                setTimeout(() => {
-                    showError();
-                }, 200);
-            }, 300);
-        }
-
-        // Command history functionality
-        let commandHistory = [];
-        let historyIndex = -1;
-
-        // Store DOM elements
-        const terminal = document.getElementById('terminal');
-        const outputContainer = document.getElementById('outputContainer');
-        const commandInput = document.getElementById('commandInput');
-        const powerButton = document.querySelector('.power-button');
-        const powerSwitch = document.getElementById('switch');
-        const commandSuggestions = document.getElementById('commandSuggestions');
-
-        // Available commands
-        const availableCommands = ['help', 'resume', 'skills', 'contact', 'github', 'linkedin', 'projects', 'logo', 'clear', 'meme', 'whoami', 'boot', 'warning', 'dankmeme'];
-
-        // Show command suggestions
-        function showCommandSuggestions(filter = '') {
-            commandSuggestions.innerHTML = '';
-
-            const filteredCommands = filter
-                ? availableCommands.filter(cmd => cmd.startsWith(filter.toLowerCase()))
-                : availableCommands;
-
-            if (filteredCommands.length === 0) return;
-
-            filteredCommands.forEach(cmd => {
-                const suggestionItem = document.createElement('div');
-                suggestionItem.className = 'suggestion-item';
-                suggestionItem.textContent = cmd;
-
-                // Make the suggestion clickable and execute command
-                suggestionItem.addEventListener('click', () => {
-                    commandInput.value = cmd;
-                    executeCommand(cmd);
-                });
-
-                // For touch devices
-                suggestionItem.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    commandInput.value = cmd;
-                    executeCommand(cmd);
-                });
-
-                commandSuggestions.appendChild(suggestionItem);
-            });
-        }
-
-        // Show an error at the first prompt
-        function showError() {
-            const errorText = `
-<span class="warning">⚠️ WARNING: This terminal portfolio was built in an afternoon and may contain bugs!</span>
-<span>Type <span class="command">help</span> to see available commands.</span>`;
-
-            addOutput(errorText);
-            showCommandSuggestions();
-        }
-
-        // Display animated logo
-        function showAnimatedLogo() {
-            const logoText = "SPOON.RIP";
-            let logoHTML = `<div class="output animated-logo">`;
-
-            for (let i = 0; i < logoText.length; i++) {
-                logoHTML += `<span style="animation-delay: ${i * 0.1}s">${logoText[i]}</span>`;
-            }
-
-            logoHTML += `</div>`;
-            addOutput(logoHTML);
-        }
-
-        // Add output to terminal
-        function addOutput(text, isCommand = false) {
-            const outputDiv = document.createElement('div');
-            outputDiv.className = 'output';
-
-            if (isCommand) {
-                outputDiv.innerHTML = `<span class="prompt">visitor@spoon.rip:~$</span> <span class="command">${text}</span>`;
-            } else {
-                outputDiv.innerHTML = text;
-            }
-
-            outputContainer.appendChild(outputDiv);
-
-            // Ensure smooth scrolling to bottom with a slight delay to allow for rendering
-            setTimeout(() => {
-                terminal.scrollTop = terminal.scrollHeight;
-            }, 10);
-        }
-
-        // Process command
-        function processCommand(command) {
-            // Add the command to output
-            addOutput(command, true);
-
-            // Process based on command
-            const lowerCommand = command.toLowerCase().trim();
-
-            if (lowerCommand === 'help') {
-                const helpText = `
-<span class="command">Available commands:</span>
-  <span class="command">help</span>      - Show this help menu
-  <span class="command">resume</span>    - View my professional resume
-  <span class="command">skills</span>    - List my technical skills
-  <span class="command">projects</span>  - View my portfolio projects
-  <span class="command">contact</span>   - Contact information
-  <span class="command">github</span>    - View my GitHub profile
-  <span class="command">linkedin</span>  - View my LinkedIn profile
-  <span class="command">logo</span>      - Display the animated logo
-  <span class="command">clear</span>     - Clear the terminal
-  <span class="command">meme</span>      - Display a random wholesome meme
-  <span class="command">dankmeme</span>  - Display a random dank meme
-  <span class="command">whoami</span>    - Who are you?
-  <span class="command">boot</span>      - Reboot the system`;
-
-                addOutput(helpText);
-            } else if (lowerCommand === 'clear') {
-                outputContainer.innerHTML = '';
-            } else if (lowerCommand === 'resume') {
-                const resumeText = `
-<span class="command">======== RESUME ========</span>
-
-<span class="command">SAM KING</span>
-
-<span class="command">PROFESSIONAL SUMMARY</span>
-  <span>Detail-oriented IT Systems Administrator with 10+ years of experience in managing complex infrastructure, networks, servers, and software supporting large-scale operations. Proficient in Cloud Solutions, Networking, Administration, Automation, and Development Operations. Proven track record in leading help desk teams and implementing IT solutions for various industries.</span>
-
-<span class="command">EXPERIENCE</span>
-  <span>IT Systems Administrator @ Pathfinder (August 2021 to Present)</span>
-  <span>• Leading a comprehensive migration of locally hosted infrastructure to cloud infrastructure</span>
-  <span>• Managed internal and external help desk teams</span>
-  <span>• Developed and deployed several DevOps & Business Operations solutions</span>
-  <span>• Managed and maintained a complex network infrastructure consisting of 12+ servers/HA clusters, 14+ L3 switches, 10+ routers, 6+ firewalls & fiber/SD-WAN interconnects between 6+ sites</span>
-  <span>• Conducted regular audits to ensure compliance with industry standards (e.g., HIPAA) and internal policies</span>
-
-  <span>Aircraft Maintenance Technician @ Air National Guard (August 2017 to June 2023)</span>
-  <span>• Performed numerous detailed weapons systems maintenance tasks on the A-10 airframe & supporting equipment</span>
-  <span>• Commended for achieving certification for weapons systems back-shop technician status at the 122nd AFB in record time</span>
-  <span>• Received the Commander's Excellence Award in 2021 and the Excellence Award for Maintenance in 2022</span>
-
-  <span>Systems Engineer (Contractor) @ Lippert Components/Oswyn Global (February 2020 to April 2022)</span>
-  <span>• Designed and implemented IT infrastructure solutions at remote sites to meet the needs of clients</span>
-  <span>• Managed and maintained server systems, including installation, configuration, troubleshooting, and upgrades</span>
-  <span>• Performed regular system monitoring and maintenance tasks to ensure high availability and reliability</span>
-
-  <span>Owner & IT Consultant/Contractor @ King IT Services, LLC (January 2017 to April 2022)</span>
-  <span>• Founded & Operated King IT Services, LLC</span>
-  <span>• Developed customized IT solutions based on client requirements, resulting in increased efficiency and cost savings</span>
-  <span>• Managed multiple projects simultaneously, ensuring timely delivery within budget constraints</span>
-
-  <span>Help Desk Technician II @ Kelley Automotive (September 2016 to May 2021)</span>
-  <span>• Deployed equipment and provided technical support to 500+ end-users across 12+ business locations</span>
-  <span>• Developed/Implemented asset lifecycle strategies for deployed PCs, servers, phones, and IT hardware</span>
-  <span>• Managed and prioritized incoming help desk tickets, ensuring prompt resolution of user problems</span>
-
-<span class="command">EDUCATION</span>
-  <span>High school diploma - Indiana Connections Academy, Indianapolis, IN (March 2012 to March 2016)</span>
-
-<span class="command">TECHNICAL SKILLS</span>
-  <span>• Cloud: AWS, Azure, GCP, Google Cloud</span>
-  <span>• Networking: Cisco, Meraki, UniFi, Fortinet, VoIP, DNS, Firewall</span>
-  <span>• Systems: Linux, Microsoft Windows Server, Active Directory, AD/AAD, Identity & Access Management</span>
-  <span>• Virtualization: VMware, Proxmox, Docker</span>
-  <span>• Databases: SQL, MySQL, Microsoft SQL Server</span>
-  <span>• Automation: PowerShell, Bash, DevOps, CI/CD, Ansible, Terraform, Power Automate, PowerApps</span>
-  <span>• Development: Git, Rest APIs</span>
-  <span>• Methodologies: Agile, DevOps</span>
-  <span>• Emerging Tech: AI, Machine Learning</span>
-
-<span>View full resume on Indeed: <a href="https://profile.indeed.com/p/samk-frdy9mv" target="_blank">profile.indeed.com/p/samk-frdy9mv</a></span>`;
-
-                addOutput(resumeText);
-            } else if (lowerCommand === 'skills') {
-                const skillsText = `
-<span class="command">======== SKILLS ========</span>
-
-<span class="command">LANGUAGES</span>
-  <span>JavaScript, TypeScript, Python, Go, SQL</span>
-
-<span class="command">FRONTEND</span>
-  <span>React, Vue.js, Angular, HTML5, CSS3, SASS</span>
-
-<span class="command">BACKEND</span>
-  <span>Node.js, Express, Django, Flask, GraphQL</span>
-
-<span class="command">DEVOPS</span>
-  <span>Docker, Kubernetes, AWS, Azure, CI/CD, Jenkins</span>
-
-<span class="command">DATABASE</span>
-  <span>PostgreSQL, MongoDB, Redis, Elasticsearch</span>`;
-
-                addOutput(skillsText);
-            } else if (lowerCommand === 'contact') {
-                const contactText = `
-<span class="command">======== CONTACT ========</span>
-
-<span>Email: <a href="mailto:hello@spoon.rip">hello@spoon.rip</a></span>
-<span>LinkedIn: <a href="https://linkedin.com/in/spoondeveloper" target="_blank">linkedin.com/in/spoondeveloper</a></span>
-<span>GitHub: <a href="https://github.com/spoondev" target="_blank">github.com/spoondev</a></span>
-<span>Twitter: <a href="https://twitter.com/spoondeveloper" target="_blank">@spoondeveloper</a></span>`;
-
-                addOutput(contactText);
-            } else if (lowerCommand === 'github') {
-                addOutput(`<span>Opening GitHub profile... <a href="https://github.com/spoondev" target="_blank">github.com/spoondev</a></span>`);
-            } else if (lowerCommand === 'linkedin') {
-                addOutput(`<span>Opening LinkedIn profile... <a href="https://linkedin.com/in/spoondeveloper" target="_blank">linkedin.com/in/spoondeveloper</a></span>`);
-            } else if (lowerCommand === 'projects') {
-                const projectsText = `
-<span class="command">======== PROJECTS ========</span>
-
-<span class="command">TaskMaster</span>
-<span>- A productivity tool built with React and Firebase</span>
-<span>- <a href="#" onclick="alert('Project link would be here')">View Project</a> | <a href="#" onclick="alert('GitHub repo would be here')">GitHub</a></span>
-
-<span class="command">DataViz Platform</span>
-<span>- Data visualization tool using D3.js and React</span>
-<span>- <a href="#" onclick="alert('Project link would be here')">View Project</a> | <a href="#" onclick="alert('GitHub repo would be here')">GitHub</a></span>
-
-<span class="command">E-Commerce API</span>
-<span>- RESTful API built with Node.js, Express, and MongoDB</span>
-<span>- <a href="#" onclick="alert('API docs would be here')">Documentation</a> | <a href="#" onclick="alert('GitHub repo would be here')">GitHub</a></span>`;
-
-                addOutput(projectsText);
-            } else if (lowerCommand === 'logo') {
-                showAnimatedLogo();
-            } else if (lowerCommand === 'meme') {
-                const loadingMsg = `<span class="loading">Fetching a wholesome meme for you...</span>`;
-                addOutput(loadingMsg);
-
-                // Fetch meme from the Meme API
-                fetch('https://meme-api.com/gimme/wholesomememes')
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Remove loading message
-                        outputContainer.lastChild.remove();
-
-                        const memeHtml = `
-<div style="margin: 10px 0;">
-  <div style="margin-bottom: 8px;">
-    <span class="command">${data.title}</span> - by ${data.author} in r/${data.subreddit}
-  </div>
-  <div>
-    <img src="${data.url}" alt="${data.title}" style="max-width: 100%; border-radius: 5px; border: 1px solid rgba(196, 255, 196, 0.3);">
-  </div>
-  <div style="margin-top: 8px;">
-    <a href="${data.postLink}" target="_blank">View on Reddit</a> • ${data.ups} upvotes
-  </div>
-</div>`;
-
-                        addOutput(memeHtml);
-                    })
-                    .catch(error => {
-                        // Remove loading message
-                        outputContainer.lastChild.remove();
-
-                        console.error('Error fetching meme:', error);
-                        addOutput(`<span class="error">Error fetching meme: ${error.message}</span>`);
-                    });
-            } else if (lowerCommand === 'whoami') {
-                addOutput(`<span>You are a visitor exploring this terminal portfolio. How can I help you today?</span>`);
-            } else if (lowerCommand === 'boot' || lowerCommand === 'reboot') {
-                addOutput(`<span class="warning">Rebooting system...</span>`);
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            } else if (lowerCommand === 'warning') {
-                addOutput(`<span class="warning">⚠️ This is a warning message example!</span>`);
-            } else if (lowerCommand === '') {
-                // Empty command
-                return;
-            } else {
-                addOutput(`<span class="error">Command not found: ${command}</span><br><span>Type <span class="command">help</span> to see available commands.</span>`);
-            }
-
-            // After processing any command, show command suggestions
-            showCommandSuggestions();
-        }
-
-        // Initial commands
-        window.addEventListener('load', () => {
-            // Start boot sequence
-            displayBootSequence();
-
-            // Focus command input
-            commandInput.focus();
-
-            // Set up intersection observer to ensure visible commands are in view
-            if ('IntersectionObserver' in window) {
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (!entry.isIntersecting) {
-                            entry.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        }
-                    });
-                }, { threshold: 0.1 });
-
-                // Observe the input line to keep it in view
-                observer.observe(document.querySelector('.input-line'));
-            }
-        });
-
-        // Focus input when terminal is clicked
-        terminal.addEventListener('click', () => {
-            commandInput.focus();
-        });
-
-        // Power button effect
-        powerButton.addEventListener('click', () => {
-            powerSwitch.checked = !powerSwitch.checked;
-            if (!powerSwitch.checked) {
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
-            }
-        });
-
-        // Handle input changes for command suggestions
-        commandInput.addEventListener('input', () => {
-            const inputValue = commandInput.value.trim();
-            showCommandSuggestions(inputValue);
-        });
-
-        // Function to execute a command
-        function executeCommand(command) {
-            if (command) {
-                // Add command to history
-                commandHistory.push(command);
-                historyIndex = commandHistory.length;
-
-                // Process the command
-                processCommand(command);
-
-                // Clear input
-                commandInput.value = '';
-
-                // Reset suggestions
-                showCommandSuggestions();
-
-                // Focus back on input for next command
-                setTimeout(() => {
-                    commandInput.focus();
-                }, 100);
-            }
-        }
-
-        // Command input handling
-        commandInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const command = commandInput.value.trim();
-                executeCommand(command);
-            } else if (e.key === 'ArrowUp') {
-                // Navigate command history (up)
-                e.preventDefault();
-                if (historyIndex > 0) {
-                    historyIndex--;
-                    commandInput.value = commandHistory[historyIndex];
-                    showCommandSuggestions(commandInput.value);
-                }
-            } else if (e.key === 'ArrowDown') {
-                // Navigate command history (down)
-                e.preventDefault();
-                if (historyIndex < commandHistory.length - 1) {
-                    historyIndex++;
-                    commandInput.value = commandHistory[historyIndex];
-                } else {
-                    historyIndex = commandHistory.length;
-                    commandInput.value = '';
-                }
-                showCommandSuggestions(commandInput.value);
-            } else if (e.key === 'Tab') {
-                // Tab completion
-                e.preventDefault();
-                const input = commandInput.value.toLowerCase();
-                const matches = availableCommands.filter(cmd => cmd.startsWith(input));
-
-                if (matches.length === 1) {
-                    commandInput.value = matches[0];
-                    showCommandSuggestions(commandInput.value);
-                } else if (matches.length > 1) {
-                    // Show matching commands
-                    showCommandSuggestions(input);
-                }
-            }
-        });
-
-        // Improve scrolling on touch devices
-        terminal.addEventListener('touchstart', function(e) {
-            // Don't prevent default to allow scrolling
-        });
-
-        // Fix for iOS momentum scrolling issues
-        document.addEventListener('touchmove', function(e) {
-            // Allow default touch move behavior
-        }, { passive: true });
-
-        // Clear any text selection when tapping on terminal (improves mobile UX)
-        terminal.addEventListener('click', function() {
-            if (window.getSelection) {
-                if (window.getSelection().empty) {
-                    window.getSelection().empty();
-                } else if (window.getSelection().removeAllRanges) {
-                    window.getSelection().removeAllRanges();
-                }
-            }
-        });
-
-        // Add viewport meta tag programmatically if it's missing
-        if (!document.querySelector('meta[name="viewport"]')) {
-            const meta = document.createElement('meta');
-            meta.name = 'viewport';
-            meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-            document.head.appendChild(meta);
-        }
-    </script>
-</body>
-</html>
